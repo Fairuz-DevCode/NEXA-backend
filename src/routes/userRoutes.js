@@ -1,6 +1,11 @@
 import express from "express";
-import { userController } from "../controllers/userController.js";
-import { verifyToken } from "../middleware/authMiddleware.js";
+import { UserController } from "../controllers/userController.js";
+import { verifyAccessToken } from "../middleware/authMiddleware.js";
 
-router = router.express();
-router.get("/me", verifyToken, AuthController.getMe);
+const router = express.Router();
+
+router.get("/me", verifyAccessToken, UserController.getProfile);
+router.patch("/me", verifyAccessToken, UserController.updateProfile);
+router.put("/me/change-password", verifyAccessToken, UserController.changePassword);
+
+export default router;

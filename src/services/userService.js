@@ -1,9 +1,12 @@
-import { UserModel } from "../models/userModel";
-import { hashPassword } from "../utils/password";
+import { UserModel } from "../models/userModel.js";
+import {
+  hashPassword,
+  comparePassword,
+} from "../utils/password.js";
 
 export class UserService {
-  static async getMyProfile(userId) {
-    const user = await UserModel.findById(id);
+  static async getUserById(userId) {
+    const user = await UserModel.getUserById(userId);
 
     if (!user) {
       throw new Error("User not found");
@@ -12,26 +15,42 @@ export class UserService {
     return user;
   }
 
-  static async updateMyProfile(
-    userId,
-    { name, phone, password },
-  ) {
-    let hashPassword = null;
+  static async updateUserProfile(userId, { name, phone }) {
+    const updatedUser = await UserModel.updateProfile(
+      userId,
+      {
+        name,
+        phone,
+      },
+    );
 
-    if (password) {
-      const hashedPassword = await hashPassword(password);
-    }
-
-    const updateUser = await UserModel.update(userId, {
-      name,
-      phone,
-      password: hashPassword,
-    });
-
-    if (!updateUser) {
+    if (!updatedUser) {
       throw new Error("User not found or update failed");
     }
 
-    return updateUser;
+    return updatedUser;
+  }
+
+  static async changeUserPassword(
+    userId,
+    currentPassword,
+    newPassword,
+  ) {
+    const user = await UserModel.getPasswordById(userId);
+    if (!user) {
+      throw new Error("password not found");
+    }
+
+    const isPasswordMatch = await comparePassword(
+      currentPassword,
+      user.password,
+    );
+    if (!isPasswordMatch) {
+      throw new Error("password lama salah");
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+    await UserModel.updatePassword(userId, hashedPassword);
+    return true;
   }
 }

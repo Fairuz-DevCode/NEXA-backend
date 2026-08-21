@@ -1,39 +1,30 @@
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
 
-export const verifyToken = async (req, res, next) => {
+export const verifyAccessToken = (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
-      return res
-        .status(401)
-        .json({ message: "Not autorzed, no token" });
-    }
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET,
-    );
-
-    const user = await pool.query(
-      "SELECT id, username, email FROM users WHERE id = $1",
-      [decoded.id],
-    );
-
-    if (user.rows.length === 0) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
-        message: "Not authorized, user not found",
+        message: "Not authorized, no access token",
       });
     }
 
-    req.user = user.rows[0];
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_ACCESS_SECRET,
+    );
+
+    req.user = decoded;
 
     next();
   } catch (error) {
     console.error(error);
-    res
-      .status(401)
-      .json({ message: "Not authorized, token failed" });
+    return res.status(401).json({
+      message: "Not authorized, token failed or expired",
+    });
   }
 };
