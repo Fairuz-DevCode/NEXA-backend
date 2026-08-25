@@ -1,8 +1,11 @@
 # Shipping API Spec
 
-## PATCH /api/shippings/order/:orderId
+## Update Shipping Status API (Admin Only)
 
-ENDPOINT ; `PATCH /api/shippings/order/:orderId`
+ENDPOINT : `PATCH /api/shippings/order/:orderId`
+
+Header :
+- Authorization: `Bearer <token_admin>`
 
 Request Body :
 
@@ -14,10 +17,12 @@ Request Body :
 }
 ```
 
-Request Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "Shipping information updated successfully",
   "data": {
     "order_id": 101,
     "courier": "JNE",
@@ -28,30 +33,91 @@ Request Body Succes :
 }
 ```
 
-Request Body Error 400 :
+Response Body Error (400 Bad Request):
 
 ```json
 {
-  "errors": "Order must be paid before updating shipping status"
+  "status": "fail",
+  "message": "Order must be paid before updating shipping status",
+  "errors": null
 }
 ```
 
-Request Body Error 404 :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Order not found"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (403 Forbidden):
+
+```json
+{
+  "status": "fail",
+  "message": "Access forbidden",
+  "errors": "Admin role is required"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Order not found",
+  "errors": null
+}
+```
+
+Response Body Error (422 Unprocessable Entity):
+
+```json
+{
+  "status": "fail",
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "courier",
+      "message": "Courier is required"
+    },
+    {
+      "field": "tracking_number",
+      "message": "Tracking number is required"
+    },
+    {
+      "field": "shipping_status",
+      "message": "Invalid shipping status"
+    }
+  ]
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
 ## Get Shipping Detail & Tracking API
 
-Endpoint : `GET /api/shippings/order/:orderId`
+ENDPOINT : `GET /api/shippings/order/:orderId`
+
+Request Body : NONE
 
 Response Body Success (200 OK) :
 
 ```json
 {
+  "status": "success",
+  "message": "Shipping details fetched successfully",
   "data": {
     "order_id": 101,
     "courier": "JNE",
@@ -63,22 +129,48 @@ Response Body Success (200 OK) :
 }
 ```
 
+Response Body Error (401 Unauthorized):
+
+```json
+{
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
 Response Body Error (404 Not Found) :
 
 ```json
 {
-  "errors": "Shipping information not found"
+  "status": "fail",
+  "message": "Shipping information not found",
+  "errors": null
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
 ## Confirm Order Received API (Customer)
 
-Endpoint : `PATCH /api/shippings/order/:orderId/complete`
+ENDPOINT : `PATCH /api/shippings/order/:orderId/complete`
+
+Request Body : NONE
 
 Response Body Success (200 OK) :
 
 ```json
 {
+  "status": "success",
+  "message": "Order completed successfully",
   "data": {
     "order_id": 101,
     "shipping_status": "delivered",
@@ -88,10 +180,42 @@ Response Body Success (200 OK) :
 }
 ```
 
+Response Body Error (400 Bad Request):
+
+```json
+{
+  "status": "fail",
+  "message": "Cannot complete order before it is shipped",
+  "errors": null
+}
+```
+
+Response Body Error (401 Unauthorized):
+
+```json
+{
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
 Response Body Error (404 Not Found) :
 
 ```json
 {
-  "errors": "Cannot complete order before it is shipped"
+  "status": "fail",
+  "message": "Order not found",
+  "errors": null
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```

@@ -14,10 +14,12 @@ Request Body :
 }
 ```
 
-Response Body Succes :
+Response Body Success (201 Created):
 
 ```json
 {
+  "status": "success",
+  "message": "Item added to cart successfully",
   "data": {
     "id": 1,
     "cart_id": 10,
@@ -28,19 +30,66 @@ Response Body Succes :
 }
 ```
 
-Respon Body Error (400 Bad Request):
+Response Body Error (400 Bad Request):
 
 ```json
 {
-  "errors": "Requested quantity exceeds available stock"
+  "status": "fail",
+  "message": "Requested quantity exceeds available stock",
+  "errors": null
 }
 ```
 
-Respon Body Error (404 Not Found) :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Requested quantity exceeds available stock"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Product or variant not found",
+  "errors": null
+}
+```
+
+Response Body Error (422 Unprocessable Entity):
+
+```json
+{
+  "status": "fail",
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "product_id",
+      "message": "Product ID is required and must be an integer"
+    },
+    {
+      "field": "product_variant_id",
+      "message": "Product variant ID is required and must be an integer"
+    },
+    {
+      "field": "quantity",
+      "message": "Quantity must be a positive integer"
+    }
+  ]
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
@@ -50,10 +99,12 @@ ENDPOINT : `GET /api/carts`
 
 Request Body : NONE
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "User cart fetched successfully",
   "data": {
     "id": 10,
     "user_id": 1,
@@ -74,11 +125,23 @@ Response Body Succes :
 }
 ```
 
-Respon Body Error (401 Unauthorized):
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Unauthorized"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
@@ -94,10 +157,12 @@ Request Body :
 }
 ```
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "Cart item quantity updated successfully",
   "data": {
     "id": 1,
     "cart_id": 10,
@@ -107,19 +172,58 @@ Response Body Succes :
 }
 ```
 
-Respon Body Error (400 Bad Request):
+Response Body Error (400 Bad Request):
 
 ```json
 {
-  "errors": "Quantity must be greater than 0 and not exceed stock"
+  "status": "fail",
+  "message": "Quantity must be greater than 0 and not exceed stock",
+  "errors": null
 }
 ```
 
-Respin Body Error (404 not found) :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Cart item not found"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Cart item not found",
+  "errors": null
+}
+```
+
+Response Body Error (422 Unprocessable Entity):
+
+```json
+{
+  "status": "fail",
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "quantity",
+      "message": "Quantity must be a positive integer"
+    }
+  ]
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
@@ -129,18 +233,41 @@ ENDPOINT : `DELETE /api/carts/items/:item-id`
 
 Request Body : NONE
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
-  "data": "Item removed from cart successfully"
+  "status": "success",
+  "message": "Item removed from cart successfully"
 }
 ```
 
-Respon Body Error :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Cart item not found"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Cart item not found",
+  "errors": null
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```

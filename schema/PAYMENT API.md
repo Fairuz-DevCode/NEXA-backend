@@ -1,4 +1,4 @@
-# Shipping API Spec
+# PAYMENT API
 
 ## Create Payment Transaction API
 
@@ -13,10 +13,12 @@ Request Body :
 }
 ```
 
-Request Body Succes (201 created):
+Response Body Success (201 Created):
 
 ```json
 {
+  "status": "success",
+  "message": "Payment transaction created successfully",
   "data": {
     "id": 501,
     "order_id": 101,
@@ -28,19 +30,62 @@ Request Body Succes (201 created):
 }
 ```
 
-Request Body Error (400 Bad Request):
+Response Body Error (400 Bad Request):
 
 ```json
 {
-  "errors": "Payment transaction already exists for this order or order is invalid"
+  "status": "fail",
+  "message": "Payment transaction already exists for this order or order is invalid",
+  "errors": null
 }
 ```
 
-Request Body Errir (404 Not Found) :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Order not found"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Order not found",
+  "errors": null
+}
+```
+
+Response Body Error (422 Unprocessable Entity):
+
+```json
+{
+  "status": "fail",
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "order_id",
+      "message": "Order ID is required and must be an integer"
+    },
+    {
+      "field": "payment_type",
+      "message": "Payment type is required"
+    }
+  ]
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
@@ -59,20 +104,32 @@ Request Body :
 }
 ```
 
-Request Body Succes (200 OK):
+Response Body Success (200 OK):
 
 ```json
 {
-  "status": "OK",
+  "status": "success",
   "message": "Payment notification processed successfully"
 }
 ```
 
-Request Body Error (400 Bad Request):
+Response Body Error (400 Bad Request):
 
 ```json
 {
-  "errors": "Invalid signature or payload"
+  "status": "fail",
+  "message": "Invalid signature or payload",
+  "errors": null
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
@@ -80,10 +137,14 @@ Request Body Error (400 Bad Request):
 
 ENDPOINT : `GET /api/payments/order/:orderId`
 
-Request Body Succes (200 OK):
+Request Body : NONE
+
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "Payment details fetched successfully",
   "data": {
     "id": 501,
     "order_id": 101,
@@ -95,10 +156,32 @@ Request Body Succes (200 OK):
 }
 ```
 
-Request Body Errir (404 Not Found) :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Payment details not found"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Payment details not found",
+  "errors": null
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```

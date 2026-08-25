@@ -6,10 +6,12 @@ ENDPOINT : `GET /api/categories`
 
 Request Body : NONE
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "Categories fetched successfully",
   "data": [
     {
       "id": 1,
@@ -25,16 +27,28 @@ Response Body Succes :
 }
 ```
 
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
+}
+```
+
 ## Get List Products API
 
 ENDPOINT : `GET /api/products`
 
 Request Body : NONE
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "Products fetched successfully",
   "data": [
     {
       "id": 1,
@@ -70,16 +84,28 @@ Response Body Succes :
 }
 ```
 
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
+}
+```
+
 ## Get Product Detail API
 
 ENDPOINT : `GET /api/products/:id`
 
 Request Body : NONE
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "Product details fetched successfully",
   "data": {
     "id": 1,
     "category_id": 1,
@@ -108,11 +134,23 @@ Response Body Succes :
 }
 ```
 
-Respon Body Error :
+Response Body Error (404 Not Found):
 
 ```json
 {
-  "errors": "Product not found"
+  "status": "fail",
+  "message": "Product not found",
+  "errors": null
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
@@ -121,7 +159,7 @@ Respon Body Error :
 ENDPOINT : `POST /api/products`
 
 Header :
-Authorization: Bearer <token_admin>
+- Authorization: `Bearer <token_admin>`
 
 Request Body :
 
@@ -140,10 +178,12 @@ Request Body :
 }
 ```
 
-Response Body Succes :
+Response Body Success (201 Created):
 
 ```json
 {
+  "status": "success",
+  "message": "Product created successfully",
   "data": {
     "id": 1,
     "sku": "SNK-BLK-4042",
@@ -158,17 +198,79 @@ Response Body Succes :
 }
 ```
 
-Respon Body Error :
+Response Body Error (400 Bad Request):
 
 ```json
 {
-  "errors": "SKU already exists or invalid data"
+  "status": "fail",
+  "message": "SKU already exists or invalid data",
+  "errors": null
+}
+```
+
+Response Body Error (401 Unauthorized):
+
+```json
+{
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (403 Forbidden):
+
+```json
+{
+  "status": "fail",
+  "message": "Access forbidden",
+  "errors": "Admin role is required"
+}
+```
+
+Response Body Error (422 Unprocessable Entity):
+
+```json
+{
+  "status": "fail",
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "category_id",
+      "message": "Category ID is required and must be an integer"
+    },
+    {
+      "field": "sku",
+      "message": "SKU is required and must be unique"
+    },
+    {
+      "field": "name",
+      "message": "Product name is required"
+    },
+    {
+      "field": "price",
+      "message": "Price is required and must be a positive number"
+    }
+  ]
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
 ## Update Product API (Admin Only)
 
 ENDPOINT : `PATCH /api/products/:id`
+
+Header :
+- Authorization: `Bearer <token_admin>`
 
 Request Body :
 
@@ -179,10 +281,12 @@ Request Body :
 }
 ```
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "Product updated successfully",
   "data": {
     "id": 1,
     "sku": "SNK-BLK-4042",
@@ -192,17 +296,67 @@ Response Body Succes :
 }
 ```
 
-Respon Body Error :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Product not found"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (403 Forbidden):
+
+```json
+{
+  "status": "fail",
+  "message": "Access forbidden",
+  "errors": "Admin role is required"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Product not found",
+  "errors": null
+}
+```
+
+Response Body Error (422 Unprocessable Entity):
+
+```json
+{
+  "status": "fail",
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "price",
+      "message": "Price must be a positive number"
+    }
+  ]
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
 ## Update Product Variant & Stock API (Admin Only)
 
 ENDPOINT : `PATCH /api/products/:id/variants/:variant-id`
+
+Header :
+- Authorization: `Bearer <token_admin>`
 
 Request Body :
 
@@ -213,10 +367,12 @@ Request Body :
 }
 ```
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
+  "status": "success",
+  "message": "Product variant updated successfully",
   "data": {
     "id": 11,
     "product_id": 1,
@@ -226,19 +382,68 @@ Response Body Succes :
 }
 ```
 
-Respon Body Error (400 Bad Request) :
+Response Body Error (400 Bad Request):
 
 ```json
 {
-  "errors": "Stock must be a non-negative integer"
+  "status": "fail",
+  "message": "Stock must be a non-negative integer",
+  "errors": null
 }
 ```
 
-Respon Body Error (404 Not Found) :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Product or variant not found"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (403 Forbidden):
+
+```json
+{
+  "status": "fail",
+  "message": "Access forbidden",
+  "errors": "Admin role is required"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Product or variant not found",
+  "errors": null
+}
+```
+
+Response Body Error (422 Unprocessable Entity):
+
+```json
+{
+  "status": "fail",
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "stock",
+      "message": "Stock is required and must be a non-negative integer"
+    }
+  ]
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
 }
 ```
 
@@ -246,22 +451,56 @@ Respon Body Error (404 Not Found) :
 
 ENDPOINT : `DELETE /api/products/:id`
 
+Header :
+- Authorization: `Bearer <token_admin>`
+
 Request Body : NONE
 
-Response Body Succes :
+Response Body Success (200 OK):
 
 ```json
 {
-  "data": "Product deleted successfully"
+  "status": "success",
+  "message": "Product deleted successfully"
 }
 ```
 
-Respon Body Error :
+Response Body Error (401 Unauthorized):
 
 ```json
 {
-  "errors": "Product not found"
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
 }
 ```
 
+Response Body Error (403 Forbidden):
 
+```json
+{
+  "status": "fail",
+  "message": "Access forbidden",
+  "errors": "Admin role is required"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Product not found",
+  "errors": null
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
+}
+```

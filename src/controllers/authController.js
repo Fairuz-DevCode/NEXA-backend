@@ -34,9 +34,12 @@ export class AuthController {
       );
 
       return res.status(201).json({
-        user,
+        status : "succes",
         message: "Registrasi Berhasil",
-        accessToken,
+        data : {
+          user,
+          accessToken,
+        }
       });
     } catch (error) {
       return res
