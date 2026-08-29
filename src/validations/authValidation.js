@@ -37,7 +37,7 @@ export const emailSchema = z
     if (forbiddenFound) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Email tidak boleh mengandung kata "${forbiddenFound}"`,
+        message: `Email tidak boleh mengandung kata ${forbiddenFound}`,
       });
     }
   });
@@ -50,16 +50,18 @@ export const passwordSchema = z
     const missing = [];
 
     if (val.length < 8) missing.push("minimal 8 karakter");
-    if (!/[A-Z]/.test(val)) missing.push("huruf besar");
-    if (!/[a-z]/.test(val)) missing.push("huruf kecil");
-    if (!/[0-9]/.test(val)) missing.push("angka");
+    if (!/[A-Z]/.test(val))
+      missing.push("minimal 1 huruf besar");
+    if (!/[a-z]/.test(val))
+      missing.push("minimal 1 huruf kecil");
+    if (!/[0-9]/.test(val)) missing.push("minimal 1 angka");
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(val))
-      missing.push("karakter spesial");
+      missing.push("minimal 1 karakter spesial");
 
     if (missing.length > 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Kurang: ${missing.join(", ")}`,
+        message: `Password harus : ${missing.join(", ")}`,
       });
     }
   });
@@ -71,8 +73,8 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().min(1, "Email wajib diisi"),
-  password: z.string().min(1, "Password wajib diisi"),
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 export const validateRegisterInput = (data) => {

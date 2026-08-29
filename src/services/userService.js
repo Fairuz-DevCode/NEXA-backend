@@ -53,4 +53,11 @@ export class UserService {
     await UserModel.updatePassword(userId, hashedPassword);
     return true;
   }
+
+
+  static async createAddress () {}
+  static async getAddress () {}
+  static async updateAddress () {}
+  static async deleteAddress () {}
+
 }

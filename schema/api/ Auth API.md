@@ -115,7 +115,8 @@ Response Body Succes (200):
       "email": "user@gmail.com",
       "role": "user"
     },
-    "accessToken": "eyJhbGciOi..."
+    "accessToken": "eyJhbGciOi...",
+    "refreshToken": "eyJhbGciOi..."
   }
 }
 ```

@@ -11,18 +11,24 @@ export class UserController {
       const user = await UserService.getUserById(userId);
 
       if (!user) {
-        return res
-          .status(404)
-          .json({ message: "user tidak ditemukan" });
+        return res.status(404).json({
+          status: "fail",
+          message: "User not found",
+          errors: null,
+        });
       }
 
-      return res
-        .status(200)
-        .json({ status: "succes get profile", data: user });
+      return res.status(200).json({
+        status: "success",
+        message: "User profile fetched successfully",
+        data: user,
+      });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ message: error.message || "Server Error" });
+      return res.status(500).json({
+        status: "error",
+        message: "Internal server error",
+        errors: null,
+      });
     }
   }
 
@@ -31,18 +37,22 @@ export class UserController {
       const validationError = validateUpdateUser(req.body);
 
       if (validationError) {
-        return res
-          .status(400)
-          .json({ message: validationError });
+        return res.status(422).json({
+          status: "fail",
+          message: "Validation failed",
+          errors: validationError,
+        });
       }
 
       const userId = req.user.id;
       const { name, phone } = req.body;
 
       if (!name && !phone) {
-        return res
-          .status(400)
-          .json({ message: "setidaknya 1 harus di rubah" });
+        return res.status(400).json({
+          status: "fail",
+          message: "setidaknya 1 harus di rubah",
+          errors: null,
+        });
       }
 
       const updatedUser =
@@ -52,13 +62,16 @@ export class UserController {
         });
 
       return res.status(200).json({
-        status: "success update profile",
+        status: "success",
+        message: "User profile updated successfully",
         data: updatedUser,
       });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ message: error.message || "Server Error" });
+      return res.status(500).json({
+        status: "error",
+        message: "Internal server error",
+        errors: null,
+      });
     }
   }
 
@@ -69,9 +82,11 @@ export class UserController {
       );
 
       if (validationError) {
-        return res
-          .status(400)
-          .json({ message: validationError });
+        return res.status(422).json({
+          status: "fail",
+          message: "Validation failed",
+          errors: validationError,
+        });
       }
 
       const userId = req.user.id;
@@ -79,8 +94,10 @@ export class UserController {
 
       if (!currentPassword || !newPassword) {
         return res.status(400).json({
+          status: "fail",
           message:
             "password lama dan password baru harus diisi",
+          errors: null,
         });
       }
 
@@ -91,13 +108,15 @@ export class UserController {
       );
 
       return res.status(200).json({
-        status: "succes",
+        status: "success",
         message: "Password berhasil dirubah",
       });
     } catch (error) {
-      return res
-        .status(400)
-        .json({ status: "fail", message: error.message });
+      return res.status(400).json({
+        status: "fail",
+        message: error.message,
+        errors: null,
+      });
     }
   }
 }

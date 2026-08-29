@@ -19,9 +19,11 @@ export class AuthController {
       );
 
       if (validationError) {
-        return res
-          .status(400)
-          .json({ message: validationError });
+        return res.status(422).json({
+          status: "fail",
+          message: "validation failed",
+          errors: validationError,
+        });
       }
 
       const { user, accessToken, refreshToken } =
@@ -34,27 +36,41 @@ export class AuthController {
       );
 
       return res.status(201).json({
-        status : "succes",
-        message: "Registrasi Berhasil",
-        data : {
+        status: "success",
+        message: "Registration Succes",
+        payload: {
           user,
           accessToken,
-        }
+        },
       });
     } catch (error) {
-      return res
-        .status(400)
-        .json({ message: error.message });
+      if (error.message === "Email already registered") {
+        return res.status(409).json({
+          status: "fail",
+          message: "Email already registered",
+          errors: null,
+        });
+      }
+
+      // Default Server Error (500)
+      return res.status(500).json({
+        status: "error",
+        message: "Internal server error",
+        errors: null,
+      });
     }
   }
 
   static async login(req, res) {
     try {
       const validationError = validateLoginInput(req.body);
+
       if (validationError) {
-        return res
-          .status(400)
-          .json({ message: validationError });
+        return res.status(422).json({
+          status: "fail",
+          message: "Validation failed",
+          errors: validationError,
+        });
       }
 
       const { user, accessToken, refreshToken } =
@@ -69,24 +85,40 @@ export class AuthController {
         cookiesOptions,
       );
 
-      return res.json({
-        user,
-        message: "Login Berhasil",
-        accessToken,
+      return res.status(200).json({
+        status: "success",
+        message: "Login successful",
+        payload: {
+          user,
+          accessToken,
+        },
       });
     } catch (error) {
-      return res
-        .status(400)
-        .json({ message: error.message });
+      if (error.message === "Invalid credentials") {
+        return res.status(401).json({
+          status: "fail",
+          message: "Invalid email or password",
+          errors: null,
+        });
+      }
+
+      return res.status(500).json({
+        status: "error",
+        message: "Internal server error",
+        errors: null,
+      });
     }
   }
 
   static async refresh(req, res) {
     try {
       const refreshToken = req.cookies?.refreshToken;
+
       if (!refreshToken) {
         return res.status(401).json({
-          message: "Refresh token tidak ditemukan",
+          status: "fail",
+          message: "Refresh token missing or invalid",
+          errors: "Invalid or expired refresh token",
         });
       }
 
@@ -96,13 +128,31 @@ export class AuthController {
         );
 
       return res.json({
-        message: "refresh access token",
-        accessToken,
+        status: "success",
+        message: "Access token refreshed successfully",
+        payload: accessToken,
       });
     } catch (error) {
-      return res
-        .status(403)
-        .json({ message: error.message });
+      if (
+        error.message ===
+          "Refresh token tidak valid atau expired" ||
+        error.message ===
+          "Token sudah dicabut atau kadaluwarsa di DB" ||
+        error.message === "Invalid refresh token" ||
+        error.message === "Refresh token expired"
+      ) {
+        return res.status(401).json({
+          status: "fail",
+          message: "Refresh token missing or invalid",
+          errors: "Invalid or expired refresh token",
+        });
+      }
+
+      return res.status(500).json({
+        status: "error",
+        message: "Internal server error",
+        errors: null,
+      });
     }
   }
 
@@ -110,19 +160,29 @@ export class AuthController {
     try {
       const refreshToken = req.cookies?.refreshToken;
 
-      if (refreshToken) {
-        await AuthService.logoutUser(refreshToken);
+      if (!refreshToken) {
+        return res.status(401).json({
+          status: "fail",
+          message: "Unauthorized access",
+          errors:
+            "User not authenticated or session already expired",
+        });
       }
+
+      await AuthService.logoutUser(refreshToken);
 
       res.clearCookie("refreshToken", cookiesOptions);
 
-      return res.json({
-        message: "Logged out successfully",
+      return res.status(200).json({
+        status: "success",
+        message: "Logout successful",
       });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ message: error.message });
+      return res.status(500).json({
+        status: "error",
+        message: "Internal server error",
+        errors: null,
+      });
     }
   }
 }
