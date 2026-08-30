@@ -23,6 +23,7 @@
     "jsonwebtoken": "^9.0.3",
     "libphonenumber-js": "^1.13.11",
     "pg": "^8.22.0",
+    "string-similarity": "^4.0.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {

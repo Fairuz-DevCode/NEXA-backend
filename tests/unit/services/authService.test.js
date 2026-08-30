@@ -133,7 +133,7 @@ describe("AuthService Unit Tests", () => {
           email: "nonexistent@example.com",
           password: "Password1!",
         })
-      ).rejects.toThrow("Invalid credentials");
+      ).rejects.toThrow("Invalid email or password");
 
       expect(comparePassword).not.toHaveBeenCalled();
     });
@@ -152,7 +152,7 @@ describe("AuthService Unit Tests", () => {
           email: "test@example.com",
           password: "WrongPassword!",
         })
-      ).rejects.toThrow("Invalid credentials");
+      ).rejects.toThrow("Invalid email or password");
 
       expect(generateRefreshToken).not.toHaveBeenCalled();
       expect(AuthModel.saveRefreshToken).not.toHaveBeenCalled();
@@ -179,7 +179,7 @@ describe("AuthService Unit Tests", () => {
 
       await expect(
         AuthService.refreshTokenServices("invalidtoken")
-      ).rejects.toThrow("Refresh token tidak valid atau expired");
+      ).rejects.toThrow("Invalid or expired refresh token");
 
       expect(AuthModel.findRefreshToken).not.toHaveBeenCalled();
     });
@@ -190,7 +190,7 @@ describe("AuthService Unit Tests", () => {
 
       await expect(
         AuthService.refreshTokenServices("revokedtoken")
-      ).rejects.toThrow("Token sudah dicabut atau kadaluwarsa di DB");
+      ).rejects.toThrow("Invalid or expired refresh token");
     });
   });
 

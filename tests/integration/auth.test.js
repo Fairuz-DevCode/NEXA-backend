@@ -1,3 +1,4 @@
+import { AppError } from "../../src/utils/appError.js";
 import "dotenv/config";
 import {
   describe,
@@ -64,7 +65,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
       jest
         .spyOn(AuthService, "registerUser")
         .mockRejectedValue(
-          new Error("Email already registered"),
+          new AppError("Email already registered", 409),
         );
 
       const res = await request(app)
@@ -178,7 +179,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
     it("401 Invalid Email or Password", async () => {
       jest
         .spyOn(AuthService, "loginUser")
-        .mockRejectedValue(new Error("Invalid credentials"));
+        .mockRejectedValue(new AppError("Invalid email or password", 401));
 
       const res = await request(app)
         .post("/api/auth/login")
@@ -266,7 +267,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
     it("401 invalid refresh token (service rejection)", async () => {
       jest
         .spyOn(AuthService, "refreshTokenServices")
-        .mockRejectedValue(new Error("Refresh token tidak valid atau expired"));
+        .mockRejectedValue(new AppError("Invalid or expired refresh token", 401));
 
       const res = await request(app)
         .post("/api/auth/refresh")

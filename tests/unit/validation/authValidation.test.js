@@ -1,19 +1,16 @@
 import { describe, it, expect } from "@jest/globals";
-import {
-  validateRegisterInput,
-  validateLoginInput,
-} from "../../../src/validations/authValidation.js";
+import { registerSchema, loginSchema } from "../../../src/validations/authValidation.js";
 
 describe("Auth Validation Unit Tests", () => {
-  describe("validateRegisterInput", () => {
-    it("should return null for valid registration input", () => {
+  describe("registerSchema", () => {
+    it("should return success for valid registration input", () => {
       const input = {
         name: "John Doe",
         email: "john.doe@example.com",
         password: "Password1!",
       };
-      const result = validateRegisterInput(input);
-      expect(result).toBeNull();
+      const result = registerSchema.safeParse(input);
+      expect(result.success).toBe(true);
     });
 
     it("should fail when name is empty", () => {
@@ -22,9 +19,9 @@ describe("Auth Validation Unit Tests", () => {
         email: "john.doe@example.com",
         password: "Password1!",
       };
-      const result = validateRegisterInput(input);
-      expect(result).not.toBeNull();
-      expect(result.name).toContain("Nama tidak boleh kosong");
+      const result = registerSchema.safeParse(input);
+      expect(result.success).toBe(false);
+      expect(result.error.issues[0].message).toContain("Nama tidak boleh kosong");
     });
 
     it("should fail when name contains forbidden words", () => {
@@ -33,9 +30,9 @@ describe("Auth Validation Unit Tests", () => {
         email: "john.doe@example.com",
         password: "Password1!",
       };
-      const result = validateRegisterInput(input);
-      expect(result).not.toBeNull();
-      expect(result.name[0]).toContain("Nama tidak boleh mengandung kata admin");
+      const result = registerSchema.safeParse(input);
+      expect(result.success).toBe(false);
+      expect(result.error.issues[0].message).toContain("Nama tidak boleh mengandung kata admin");
     });
 
     it("should fail when email is invalid", () => {
@@ -44,9 +41,9 @@ describe("Auth Validation Unit Tests", () => {
         email: "invalid-email",
         password: "Password1!",
       };
-      const result = validateRegisterInput(input);
-      expect(result).not.toBeNull();
-      expect(result.email).toContain("Format email tidak valid");
+      const result = registerSchema.safeParse(input);
+      expect(result.success).toBe(false);
+      expect(result.error.issues[0].message).toContain("Format email tidak valid");
     });
 
     it("should fail when email contains forbidden word in local part", () => {
@@ -55,9 +52,9 @@ describe("Auth Validation Unit Tests", () => {
         email: "root_user@example.com",
         password: "Password1!",
       };
-      const result = validateRegisterInput(input);
-      expect(result).not.toBeNull();
-      expect(result.email[0]).toContain("Email tidak boleh mengandung kata root");
+      const result = registerSchema.safeParse(input);
+      expect(result.success).toBe(false);
+      expect(result.error.issues[0].message).toContain("Email tidak boleh mengandung kata root");
     });
 
     it("should fail when password does not meet complexity requirements", () => {
@@ -66,20 +63,20 @@ describe("Auth Validation Unit Tests", () => {
         email: "john.doe@example.com",
         password: "123", // too short, no uppercase, no lowercase, no special char
       };
-      const result = validateRegisterInput(input);
-      expect(result).not.toBeNull();
-      expect(result.password[0]).toContain("Password harus :");
+      const result = registerSchema.safeParse(input);
+      expect(result.success).toBe(false);
+      expect(result.error.issues[0].message).toContain("Password harus :");
     });
   });
 
-  describe("validateLoginInput", () => {
-    it("should return null for valid login input", () => {
+  describe("loginSchema", () => {
+    it("should return success for valid login input", () => {
       const input = {
         email: "john.doe@example.com",
         password: "Password1!",
       };
-      const result = validateLoginInput(input);
-      expect(result).toBeNull();
+      const result = loginSchema.safeParse(input);
+      expect(result.success).toBe(true);
     });
 
     it("should fail when email is empty", () => {
@@ -87,9 +84,9 @@ describe("Auth Validation Unit Tests", () => {
         email: "",
         password: "Password1!",
       };
-      const result = validateLoginInput(input);
-      expect(result).not.toBeNull();
-      expect(result.email).toContain("Email tidak boleh kosong");
+      const result = loginSchema.safeParse(input);
+      expect(result.success).toBe(false);
+      expect(result.error.issues[0].message).toContain("Email tidak boleh kosong");
     });
 
     it("should fail when password is empty", () => {
@@ -97,9 +94,9 @@ describe("Auth Validation Unit Tests", () => {
         email: "john.doe@example.com",
         password: "",
       };
-      const result = validateLoginInput(input);
-      expect(result).not.toBeNull();
-      expect(result.password).toContain("Password tidak boleh kosong");
+      const result = loginSchema.safeParse(input);
+      expect(result.success).toBe(false);
+      expect(result.error.issues[0].message).toContain("Password tidak boleh kosong");
     });
   });
 });

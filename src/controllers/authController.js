@@ -25,8 +25,8 @@ export class AuthController {
         status: "success",
         message: "Registration Succes",
         payload: {
-          user,
-          accessToken,
+          user: user,
+          accessToken: accessToken,
         },
       });
     } catch (error) {
@@ -52,8 +52,8 @@ export class AuthController {
         status: "success",
         message: "Login successful",
         payload: {
-          user,
-          accessToken,
+          user: user,
+          accessToken: accessToken,
         },
       });
     } catch (error) {
@@ -66,7 +66,11 @@ export class AuthController {
       const refreshToken = req.cookies?.refreshToken;
 
       if (!refreshToken) {
-        throw new AppError("Refresh token missing or invalid", 401, "Invalid or expired refresh token");
+        throw new AppError(
+          "Refresh token missing or invalid",
+          401,
+          "Invalid or expired refresh token",
+        );
       }
 
       const { accessToken } =
@@ -77,7 +81,9 @@ export class AuthController {
       return res.json({
         status: "success",
         message: "Access token refreshed successfully",
-        payload: accessToken,
+        payload: {
+          accessToken: accessToken,
+        },
       });
     } catch (error) {
       next(error);
@@ -89,7 +95,11 @@ export class AuthController {
       const refreshToken = req.cookies?.refreshToken;
 
       if (!refreshToken) {
-        throw new AppError("Unauthorized access", 401, "User not authenticated or session already expired");
+        throw new AppError(
+          "Unauthorized access",
+          401,
+          "User not authenticated or session already expired",
+        );
       }
 
       await AuthService.logoutUser(refreshToken);

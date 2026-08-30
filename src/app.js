@@ -4,10 +4,13 @@ dotenv.config();
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+
 import { handleJsonSyntaxError } from "./middleware/jsonErrorMiddleware.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import addressRoutes  from "./routes/addressRoutes.js";
+
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
 const app = express();
@@ -27,7 +30,7 @@ app.use(handleJsonSyntaxError);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
-app.use("/addresses", addressRoutes);
+app.use("/api/addresses", addressRoutes);
 
 app.use(errorHandler);
 

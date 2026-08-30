@@ -1,4 +1,5 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+import { AppError } from "../../../src/utils/appError.js";
 
 // Mock dependencies using unstable_mockModule
 jest.unstable_mockModule("../../../src/services/userService.js", () => ({
@@ -20,7 +21,7 @@ const { UserService } = await import("../../../src/services/userService.js");
 const { validateUpdateUser, validateChangePassword } = await import("../../../src/validations/userValidation.js");
 
 describe("UserController Unit Tests", () => {
-  let req, res;
+  let req, res, next;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -32,6 +33,7 @@ describe("UserController Unit Tests", () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
     };
+    next = jest.fn();
   });
 
   describe("getProfile", () => {
@@ -39,36 +41,34 @@ describe("UserController Unit Tests", () => {
       const mockUser = { id: 1, name: "Alice", email: "alice@example.com" };
       UserService.getUserById.mockResolvedValue(mockUser);
 
-      await UserController.getProfile(req, res);
+      await UserController.getProfile(req, res, next);
 
       expect(UserService.getUserById).toHaveBeenCalledWith(1);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        status: "succes get profile",
+        status: "success",
+        message: "User profile fetched successfully",
         data: mockUser,
       });
     });
 
-    it("should return 404 if user is not found", async () => {
+    it("should call next with 404 AppError if user is not found", async () => {
       UserService.getUserById.mockResolvedValue(null);
 
-      await UserController.getProfile(req, res);
+      await UserController.getProfile(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "user tidak ditemukan",
-      });
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect(next.mock.calls[0][0].statusCode).toBe(404);
+      expect(next.mock.calls[0][0].message).toBe("User not found");
     });
 
-    it("should return 500 on unexpected errors", async () => {
-      UserService.getUserById.mockRejectedValue(new Error("Database offline"));
+    it("should call next with error on unexpected errors", async () => {
+      const error = new Error("Database offline");
+      UserService.getUserById.mockRejectedValue(error);
 
-      await UserController.getProfile(req, res);
+      await UserController.getProfile(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Database offline",
-      });
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
@@ -76,13 +76,10 @@ describe("UserController Unit Tests", () => {
     it("should update profile successfully with 200", async () => {
       req.body = { name: "Alice Updated", phone: "+628123456789" };
       validateUpdateUser.mockReturnValue(null);
-      UserService.updateUserProfile.mockResolvedValue({
-        id: 1,
-        name: "Alice Updated",
-        phone: "+628123456789",
-      });
+      const updatedMock = { id: 1, name: "Alice Updated", phone: "+628123456789" };
+      UserService.updateUserProfile.mockResolvedValue(updatedMock);
 
-      await UserController.updateProfile(req, res);
+      await UserController.updateProfile(req, res, next);
 
       expect(validateUpdateUser).toHaveBeenCalledWith(req.body);
       expect(UserService.updateUserProfile).toHaveBeenCalledWith(1, {
@@ -91,50 +88,46 @@ describe("UserController Unit Tests", () => {
       });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        status: "success update profile",
-        data: { id: 1, name: "Alice Updated", phone: "+628123456789" },
+        status: "success",
+        message: "User profile updated successfully",
+        data: updatedMock,
       });
     });
 
-    it("should return 400 if validateUpdateUser fails", async () => {
+    it("should call next with 422 AppError if validateUpdateUser fails", async () => {
       req.body = { phone: "invalid" };
       const validationError = "Nomer telpon tidak valid";
       validateUpdateUser.mockReturnValue(validationError);
 
-      await UserController.updateProfile(req, res);
+      await UserController.updateProfile(req, res, next);
 
       expect(validateUpdateUser).toHaveBeenCalledWith(req.body);
       expect(UserService.updateUserProfile).not.toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: validationError,
-      });
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect(next.mock.calls[0][0].statusCode).toBe(422);
     });
 
-    it("should return 400 if neither name nor phone is provided", async () => {
+    it("should call next with 400 AppError if neither name nor phone is provided", async () => {
       req.body = {};
       validateUpdateUser.mockReturnValue(null);
 
-      await UserController.updateProfile(req, res);
+      await UserController.updateProfile(req, res, next);
 
       expect(UserService.updateUserProfile).not.toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "setidaknya 1 harus di rubah",
-      });
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect(next.mock.calls[0][0].statusCode).toBe(400);
+      expect(next.mock.calls[0][0].message).toBe("setidaknya 1 harus di rubah");
     });
 
-    it("should return 500 on unexpected errors during update", async () => {
+    it("should call next with error on unexpected errors during update", async () => {
       req.body = { name: "Alice" };
       validateUpdateUser.mockReturnValue(null);
-      UserService.updateUserProfile.mockRejectedValue(new Error("Service error"));
+      const error = new Error("Service error");
+      UserService.updateUserProfile.mockRejectedValue(error);
 
-      await UserController.updateProfile(req, res);
+      await UserController.updateProfile(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Service error",
-      });
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
@@ -144,7 +137,7 @@ describe("UserController Unit Tests", () => {
       validateChangePassword.mockReturnValue(null);
       UserService.changeUserPassword.mockResolvedValue(true);
 
-      await UserController.changePassword(req, res);
+      await UserController.changePassword(req, res, next);
 
       expect(validateChangePassword).toHaveBeenCalledWith(req.body);
       expect(UserService.changeUserPassword).toHaveBeenCalledWith(
@@ -154,51 +147,44 @@ describe("UserController Unit Tests", () => {
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        status: "succes",
+        status: "success",
         message: "Password berhasil dirubah",
       });
     });
 
-    it("should return 400 if validateChangePassword fails", async () => {
+    it("should call next with 422 AppError if validateChangePassword fails", async () => {
       req.body = { currentPassword: "", newPassword: "short" };
       const validationError = "Password lama wajib diisi";
       validateChangePassword.mockReturnValue(validationError);
 
-      await UserController.changePassword(req, res);
+      await UserController.changePassword(req, res, next);
 
       expect(validateChangePassword).toHaveBeenCalledWith(req.body);
       expect(UserService.changeUserPassword).not.toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: validationError,
-      });
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect(next.mock.calls[0][0].statusCode).toBe(422);
     });
 
-    it("should return 400 if currentPassword or newPassword is missing in body", async () => {
+    it("should call next with 400 AppError if currentPassword or newPassword is missing in body", async () => {
       req.body = { currentPassword: "Old" }; // newPassword missing
       validateChangePassword.mockReturnValue(null);
 
-      await UserController.changePassword(req, res);
+      await UserController.changePassword(req, res, next);
 
       expect(UserService.changeUserPassword).not.toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "password lama dan password baru harus diisi",
-      });
+      expect(next).toHaveBeenCalledWith(expect.any(AppError));
+      expect(next.mock.calls[0][0].statusCode).toBe(400);
     });
 
-    it("should return 400 fail status on password service errors", async () => {
+    it("should call next with error on password service errors", async () => {
       req.body = { currentPassword: "OldPassword1!", newPassword: "NewPassword1!" };
       validateChangePassword.mockReturnValue(null);
-      UserService.changeUserPassword.mockRejectedValue(new Error("password lama salah"));
+      const error = new Error("password lama salah");
+      UserService.changeUserPassword.mockRejectedValue(error);
 
-      await UserController.changePassword(req, res);
+      await UserController.changePassword(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: "fail",
-        message: "password lama salah",
-      });
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 });

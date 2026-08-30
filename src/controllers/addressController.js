@@ -9,7 +9,7 @@ export default class addressController {
       return res.status(200).json({
         status: "success",
         message: "Address added successfully",
-        data: newAddress
+        payload: newAddress
       });
     } catch (error) {
       next(error);
@@ -24,7 +24,7 @@ export default class addressController {
       return res.status(200).json({
         status: "success",
         message: "User addresses fetch successfully",
-        data: addresses
+        payload: addresses
       });
     } catch (error) {
       next(error);
@@ -41,7 +41,7 @@ export default class addressController {
       return res.status(200).json({
         status: "success",
         message: "User address update successfully",
-        data: updatedAddress
+        payload: updatedAddress
       });
     } catch (error) {
       next(error);
