@@ -3,19 +3,16 @@ import {
   validateUpdateUser,
   validateChangePassword,
 } from "../validations/userValidation.js";
+import { AppError } from "../utils/appError.js";
 
 export class UserController {
-  static async getProfile(req, res) {
+  static async getProfile(req, res, next) {
     try {
       const userId = req.user.id;
       const user = await UserService.getUserById(userId);
 
       if (!user) {
-        return res.status(404).json({
-          status: "fail",
-          message: "User not found",
-          errors: null,
-        });
+        throw new AppError("User not found", 404);
       }
 
       return res.status(200).json({
@@ -24,35 +21,23 @@ export class UserController {
         data: user,
       });
     } catch (error) {
-      return res.status(500).json({
-        status: "error",
-        message: "Internal server error",
-        errors: null,
-      });
+      next(error);
     }
   }
 
-  static async updateProfile(req, res) {
+  static async updateProfile(req, res, next) {
     try {
       const validationError = validateUpdateUser(req.body);
 
       if (validationError) {
-        return res.status(422).json({
-          status: "fail",
-          message: "Validation failed",
-          errors: validationError,
-        });
+        throw new AppError("Validation failed", 422, validationError);
       }
 
       const userId = req.user.id;
       const { name, phone } = req.body;
 
       if (!name && !phone) {
-        return res.status(400).json({
-          status: "fail",
-          message: "setidaknya 1 harus di rubah",
-          errors: null,
-        });
+        throw new AppError("setidaknya 1 harus di rubah", 400);
       }
 
       const updatedUser =
@@ -67,38 +52,25 @@ export class UserController {
         data: updatedUser,
       });
     } catch (error) {
-      return res.status(500).json({
-        status: "error",
-        message: "Internal server error",
-        errors: null,
-      });
+      next(error);
     }
   }
 
-  static async changePassword(req, res) {
+  static async changePassword(req, res, next) {
     try {
       const validationError = validateChangePassword(
         req.body,
       );
 
       if (validationError) {
-        return res.status(422).json({
-          status: "fail",
-          message: "Validation failed",
-          errors: validationError,
-        });
+        throw new AppError("Validation failed", 422, validationError);
       }
 
       const userId = req.user.id;
       const { currentPassword, newPassword } = req.body;
 
       if (!currentPassword || !newPassword) {
-        return res.status(400).json({
-          status: "fail",
-          message:
-            "password lama dan password baru harus diisi",
-          errors: null,
-        });
+        throw new AppError("password lama dan password baru harus diisi", 400);
       }
 
       await UserService.changeUserPassword(
@@ -112,11 +84,7 @@ export class UserController {
         message: "Password berhasil dirubah",
       });
     } catch (error) {
-      return res.status(400).json({
-        status: "fail",
-        message: error.message,
-        errors: null,
-      });
+      next(error);
     }
   }
 }

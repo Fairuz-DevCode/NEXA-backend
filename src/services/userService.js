@@ -3,13 +3,14 @@ import {
   hashPassword,
   comparePassword,
 } from "../utils/password.js";
+import { AppError } from "../utils/appError.js";
 
 export class UserService {
   static async getUserById(userId) {
     const user = await UserModel.getUserById(userId);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new AppError("User not found", 404);
     }
 
     return user;
@@ -25,7 +26,7 @@ export class UserService {
     );
 
     if (!updatedUser) {
-      throw new Error("User not found or update failed");
+      throw new AppError("User not found or update failed", 400);
     }
 
     return updatedUser;
@@ -38,7 +39,7 @@ export class UserService {
   ) {
     const user = await UserModel.getPasswordById(userId);
     if (!user) {
-      throw new Error("password not found");
+      throw new AppError("password not found", 404);
     }
 
     const isPasswordMatch = await comparePassword(
@@ -46,7 +47,7 @@ export class UserService {
       user.password,
     );
     if (!isPasswordMatch) {
-      throw new Error("password lama salah");
+      throw new AppError("password lama salah", 400);
     }
 
     const hashedPassword = await hashPassword(newPassword);

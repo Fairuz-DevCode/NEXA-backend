@@ -8,13 +8,14 @@ import {
   hashPassword,
   comparePassword,
 } from "../utils/password.js";
+import { AppError } from "../utils/appError.js";
 
 export class AuthService {
   // Logika Register
   static async registerUser({ name, email, password }) {
     const userExists = await AuthModel.findByEmail(email);
     if (userExists) {
-      throw new Error("Email already registered");
+      throw new AppError("Email already registered", 409);
     }
 
     const hashedPassword = await hashPassword(password);
@@ -46,7 +47,7 @@ export class AuthService {
   static async loginUser({ email, password }) {
     const userData = await AuthModel.findByEmail(email);
     if (!userData) {
-      throw new Error("Invalid credentials");
+      throw new AppError("Invalid email or password", 401);
     }
 
     const isMatch = await comparePassword(
@@ -54,7 +55,7 @@ export class AuthService {
       userData.password,
     );
     if (!isMatch) {
-      throw new Error("Invalid credentials");
+      throw new AppError("Invalid email or password", 401);
     }
 
     const refreshToken = generateRefreshToken(userData);
@@ -78,8 +79,9 @@ export class AuthService {
     // Verifikasi JWT Signature
     const decoded = verifyRefreshToken(refreshToken);
     if (!decoded) {
-      throw new Error(
-        "Refresh token tidak valid atau expired",
+      throw new AppError(
+        "Invalid or expired refresh token",
+        401,
       );
     }
 
@@ -90,8 +92,9 @@ export class AuthService {
     );
 
     if (!tokenInDb) {
-      throw new Error(
-        "Token sudah dicabut atau kadaluwarsa di DB",
+      throw new AppError(
+        "Invalid or expired refresh token",
+        401,
       );
     }
 

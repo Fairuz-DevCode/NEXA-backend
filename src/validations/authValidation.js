@@ -73,23 +73,14 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
+  email: z
+    .string({ required_error: "name do not empty" })
+    .trim()
+    .min(1, "Email tidak boleh kosong")
+    .email("Format email tidak valid"),
+  password: z
+    .string({
+      required_error: "Password tidak boleh kosong",
+    })
+    .min(1, "Password tidak boleh kosong"),
 });
-
-export const validateRegisterInput = (data) => {
-  const result = registerSchema.safeParse(data);
-  if (!result.success) {
-    // Mengembalikan pesan error pertama dari Zod
-    return result.error.flatten().fieldErrors;
-  }
-  return null;
-};
-
-export const validateLoginInput = (data) => {
-  const result = loginSchema.safeParse(data);
-  if (!result.success) {
-    return result.error.flatten().fieldErrors;
-  }
-  return null;
-};

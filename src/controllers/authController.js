@@ -1,8 +1,6 @@
 import { AuthService } from "../services/authService.js";
-import {
-  validateRegisterInput,
-  validateLoginInput,
-} from "../validations/authValidation.js";
+
+import { AppError } from "../utils/appError.js";
 
 const cookiesOptions = {
   httpOnly: true,
@@ -12,20 +10,8 @@ const cookiesOptions = {
 };
 
 export class AuthController {
-  static async register(req, res) {
+  static async register(req, res, next) {
     try {
-      const validationError = validateRegisterInput(
-        req.body,
-      );
-
-      if (validationError) {
-        return res.status(422).json({
-          status: "fail",
-          message: "validation failed",
-          errors: validationError,
-        });
-      }
-
       const { user, accessToken, refreshToken } =
         await AuthService.registerUser(req.body);
 
@@ -44,35 +30,12 @@ export class AuthController {
         },
       });
     } catch (error) {
-      if (error.message === "Email already registered") {
-        return res.status(409).json({
-          status: "fail",
-          message: "Email already registered",
-          errors: null,
-        });
-      }
-
-      // Default Server Error (500)
-      return res.status(500).json({
-        status: "error",
-        message: "Internal server error",
-        errors: null,
-      });
+      next(error);
     }
   }
 
-  static async login(req, res) {
+  static async login(req, res, next) {
     try {
-      const validationError = validateLoginInput(req.body);
-
-      if (validationError) {
-        return res.status(422).json({
-          status: "fail",
-          message: "Validation failed",
-          errors: validationError,
-        });
-      }
-
       const { user, accessToken, refreshToken } =
         await AuthService.loginUser({
           email: req.body.email,
@@ -94,32 +57,16 @@ export class AuthController {
         },
       });
     } catch (error) {
-      if (error.message === "Invalid credentials") {
-        return res.status(401).json({
-          status: "fail",
-          message: "Invalid email or password",
-          errors: null,
-        });
-      }
-
-      return res.status(500).json({
-        status: "error",
-        message: "Internal server error",
-        errors: null,
-      });
+      next(error);
     }
   }
 
-  static async refresh(req, res) {
+  static async refresh(req, res, next) {
     try {
       const refreshToken = req.cookies?.refreshToken;
 
       if (!refreshToken) {
-        return res.status(401).json({
-          status: "fail",
-          message: "Refresh token missing or invalid",
-          errors: "Invalid or expired refresh token",
-        });
+        throw new AppError("Refresh token missing or invalid", 401, "Invalid or expired refresh token");
       }
 
       const { accessToken } =
@@ -133,40 +80,16 @@ export class AuthController {
         payload: accessToken,
       });
     } catch (error) {
-      if (
-        error.message ===
-          "Refresh token tidak valid atau expired" ||
-        error.message ===
-          "Token sudah dicabut atau kadaluwarsa di DB" ||
-        error.message === "Invalid refresh token" ||
-        error.message === "Refresh token expired"
-      ) {
-        return res.status(401).json({
-          status: "fail",
-          message: "Refresh token missing or invalid",
-          errors: "Invalid or expired refresh token",
-        });
-      }
-
-      return res.status(500).json({
-        status: "error",
-        message: "Internal server error",
-        errors: null,
-      });
+      next(error);
     }
   }
 
-  static async logout(req, res) {
+  static async logout(req, res, next) {
     try {
       const refreshToken = req.cookies?.refreshToken;
 
       if (!refreshToken) {
-        return res.status(401).json({
-          status: "fail",
-          message: "Unauthorized access",
-          errors:
-            "User not authenticated or session already expired",
-        });
+        throw new AppError("Unauthorized access", 401, "User not authenticated or session already expired");
       }
 
       await AuthService.logoutUser(refreshToken);
@@ -178,11 +101,7 @@ export class AuthController {
         message: "Logout successful",
       });
     } catch (error) {
-      return res.status(500).json({
-        status: "error",
-        message: "Internal server error",
-        errors: null,
-      });
+      next(error);
     }
   }
 }
