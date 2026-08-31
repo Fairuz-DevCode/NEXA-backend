@@ -1,4 +1,4 @@
-import {AddressModel} from "../models/addressModel.js";
+import { AddressModel } from "../models/addressModel.js";
 import stringSimilarity from "string-similarity";
 
 export const checkDuplicateAddress = async (
@@ -30,13 +30,13 @@ export const checkDuplicateAddress = async (
 
     for (const existing of existingAddresses) {
       const existingPostal = String(
-        existing.postal_code || existing.postalCode,
+        existing.postal_code,
       ).trim();
 
       // Cek apakah postal code sama
       if (newPostal === existingPostal) {
         const existingStreet = cleanText(
-          existing.street_address || existing.streetAddress,
+          existing.street_address,
         );
 
         // Hitung kemiripan pakai string-similarity
@@ -54,7 +54,7 @@ export const checkDuplicateAddress = async (
             errors: [
               {
                 field: "street_address",
-                message: `Alamat terlalu mirip dengan data yang sudah ada (${similarity.toFixed(1)}% kemiripan) pada kode pos yang sama.`,
+                message: `The address is too similar to an existing record (${similarity.toFixed(1)}% similarity) under the same postal code`,
               },
             ],
           });

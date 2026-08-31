@@ -10,6 +10,7 @@ import { handleJsonSyntaxError } from "./middleware/jsonErrorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import addressRoutes  from "./routes/addressRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
@@ -31,6 +32,7 @@ app.use(handleJsonSyntaxError);
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/addresses", addressRoutes);
+app.use("/api/products", productRoutes);
 
 app.use(errorHandler);
 
