@@ -1,25 +1,19 @@
 import express from "express";
 
-import { verifyAccessToken } from "../middleware/authMiddleware";
-import { uploadProductImage } from "../middleware/uploadProductImageMiddleware";
+import { verifyAccessToken } from "../middleware/authMiddleware.js";
+import { uploadProductImage } from "../middleware/uploadProductImageMiddleware.js";
 
-import productController from "../controllers/productController";
+import controller from "../controllers/productController.js";
 
 const router = express.Router();
 
-router.use(verifyAccessToken);
+router.post("/", verifyAccessToken, uploadProductImage, controller.createProduct);
+router.get("/", controller.getProduct);
+router.get("/:id", controller.getProductDetail);
+router.patch("/:id", verifyAccessToken, uploadProductImage, controller.updateProduct);
+router.delete("/:id", verifyAccessToken, controller.deleteProduct);
 
-router.post(
-  "/",
-  uploadProductImage,
-  productController.createProduct,
-);
-router.get("/", productController.getProduct);
-router.patch(
-  "/:id",
-  uploadProductImage,
-  productController.updateProduct,
-);
-router.delete("/:id", productController.deleteProduct);
+// Dynamic Catch-All Route for /categories/[category-slug] and /categories/[category-slug]/[product-slug]
+router.get("/*slugPath", controller.getBySlugPath);
 
 export default router;

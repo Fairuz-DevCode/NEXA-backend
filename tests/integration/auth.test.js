@@ -35,7 +35,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
       expect(res.body).toEqual({
         status: "success",
         message: "Registration Succes",
-        data: {
+        payload: {
           user: {
             id: expect.any(Number), // ID pasti angka
             name: "user",
@@ -97,7 +97,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
 
       expect(res.statusCode).toEqual(422);
       expect(res.body.status).toEqual("fail");
-      expect(res.body.message).toEqual("validation failed");
+      expect(res.body.message).toEqual("Validation failed");
       expect(res.body.errors).toEqual(expect.any(Object));
     });
 
@@ -117,7 +117,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
       expect(res.statusCode).toEqual(500);
       expect(res.body).toEqual({
         status: "error",
-        message: "Internal server error",
+        message: "Database Crash",
         errors: null,
       });
     });
@@ -150,7 +150,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
       expect(res.body).toEqual({
         status: "success",
         message: "Login successful",
-        data: {
+        payload: {
           user: {
             id: 1,
             name: "user",
@@ -202,7 +202,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
         .post("/api/auth/login")
         .set("Content-Type", "application/json")
         .send({
-          email: "invalid@gmail.com",
+          email: "not-an-email",
           password: "123",
         });
 
@@ -228,7 +228,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
       expect(res.statusCode).toEqual(500);
       expect(res.body).toEqual({
         status: "error",
-        message: "Internal server error",
+        message: "Database Crash",
         errors: null,
       });
     });
@@ -248,7 +248,9 @@ describe("AUTH API AUTOMATED TESTING", () => {
       expect(res.body).toEqual({
         status: "success",
         message: "Access token refreshed successfully",
-        data: "newAccessToken123",
+        payload: {
+          accessToken: "newAccessToken123",
+        },
       });
     });
 
@@ -276,8 +278,8 @@ describe("AUTH API AUTOMATED TESTING", () => {
       expect(res.statusCode).toEqual(401);
       expect(res.body).toEqual({
         status: "fail",
-        message: "Refresh token missing or invalid",
-        errors: "Invalid or expired refresh token",
+        message: "Invalid or expired refresh token",
+        errors: null,
       });
     });
 
@@ -293,7 +295,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
       expect(res.statusCode).toEqual(500);
       expect(res.body).toEqual({
         status: "error",
-        message: "Internal server error",
+        message: "Database connection lost",
         errors: null,
       });
     });
@@ -343,7 +345,7 @@ describe("AUTH API AUTOMATED TESTING", () => {
       expect(res.statusCode).toEqual(500);
       expect(res.body).toEqual({
         status: "error",
-        message: "Internal server error",
+        message: "Database crash",
         errors: null,
       });
     });

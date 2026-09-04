@@ -116,7 +116,9 @@ describe("AuthController Unit Tests", () => {
       expect(res.json).toHaveBeenCalledWith({
         status: "success",
         message: "Access token refreshed successfully",
-        payload: "newAccess123",
+        payload: {
+          accessToken: "newAccess123",
+        },
       });
     });
 

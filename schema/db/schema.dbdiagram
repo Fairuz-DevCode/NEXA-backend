@@ -1,10 +1,11 @@
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "darkMode": true,
   "gridEnabling": false,
   "currentViewName": null,
   "defaultView": {
     "detailLevel": "All",
+    "relationshipMode": "All",
     "tablePositions": [
       {
         "name": "users",
@@ -21,8 +22,8 @@
       {
         "name": "categories",
         "schemaName": "public",
-        "x": 49.51303046523873,
-        "y": 216.52292171284077
+        "x": 33.96109254802907,
+        "y": 175.05108726694846
       },
       {
         "name": "products",

@@ -1,27 +1,80 @@
 # CATEGORY & PRODUCT API
 
-## Get List Categories API
+## Create Category API (Admin Only)
 
-ENDPOINT : `GET /api/categories`
+ENDPOINT: `POST /api/categories`
 
-Request Body : NONE
+Header:
 
-Response Body Success (200 OK):
+- Authorization: Bearer <token_admin>
+
+Request Body:
+
+```json
+{
+  "name": "Sport Shoes",
+  "slug": "sport-shoes"
+}
+```
+
+Response Body Success (201 Created):
 
 ```json
 {
   "status": "success",
-  "message": "Categories fetched successfully",
-  "data": [
+  "message": "Category created successfully",
+  "payload": {
+    "id": 3,
+    "name": "Sport Shoes",
+    "slug": "sport-shoes"
+  }
+}
+```
+
+Response Body Error (400 Bad Request):
+
+```json
+{
+  "status": "fail",
+  "message": "Category name or slug already exists",
+  "errors": null
+}
+```
+
+Response Body Error (401 Unauthorized):
+
+```json
+{
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (403 Forbidden):
+
+```json
+{
+  "status": "fail",
+  "message": "Access forbidden",
+  "errors": "Admin role is required"
+}
+```
+
+Response Body Error (422 Unprocessable Entity):
+
+```json
+{
+  "status": "fail",
+  "message": "Validation failed",
+  "errors": [
     {
-      "id": 1,
-      "name": "Sneakers",
-      "slug": "sneakers"
+      "field": "name",
+      "message": "Category name is required"
     },
     {
-      "id": 2,
-      "name": "Running Shoes",
-      "slug": "running-shoes"
+      "field": "slug",
+      "message": "Slug is required and must be unique"
     }
   ]
 }
@@ -37,9 +90,9 @@ Response Body Error (500 Internal Server Error):
 }
 ```
 
-## Get List Products API
+## Get Categories API
 
-ENDPOINT : `GET /api/products`
+ENDPOINT : `GET /api/categories`
 
 Request Body : NONE
 
@@ -48,39 +101,39 @@ Response Body Success (200 OK):
 ```json
 {
   "status": "success",
-  "message": "Products fetched successfully",
-  "data": [
+  "message": "Categories fetched successfully",
+  "payload": [
     {
       "id": 1,
-      "category_id": 1,
-      "sku": "SNK-BLK-4042",
-      "name": "Streetwear Canvas Low Black",
-      "description": "Sepatu low-top canvas premium dengan insole empuk untuk penggunaan sehari-hari",
-      "price": 450000,
-      "variants": [
-        {
-          "id": 10,
-          "size": "40",
-          "stock": 15
-        },
-        {
-          "id": 11,
-          "size": "41",
-          "stock": 20
-        },
-        {
-          "id": 12,
-          "size": "42",
-          "stock": 8
-        }
-      ]
+      "name": "Sport Shoes",
+      "slug": "sport-shoes"
+    },
+    {
+      "id": 2,
+      "name": "Running Shoes",
+      "slug": "running-shoes"
     }
-  ],
-  "paging": {
-    "page": 1,
-    "total_page": 1,
-    "total_item": 1
-  }
+  ]
+}
+```
+
+Response Body Error (401 Unauthorized):
+
+```json
+{
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (403 Forbidden):
+
+```json
+{
+  "status": "fail",
+  "message": "Access forbidden",
+  "errors": "Admin role is required"
 }
 ```
 
@@ -94,43 +147,52 @@ Response Body Error (500 Internal Server Error):
 }
 ```
 
-## Get Product Detail API
+## Delete Category API (Admin Only)
 
-ENDPOINT : `GET /api/products/:id`
+ENDPOINT: `DELETE /api/categories`
 
-Request Body : NONE
+Header:
+
+- Authorization: Bearer <token_admin>
+
+Request Body: NONE
 
 Response Body Success (200 OK):
 
 ```json
 {
   "status": "success",
-  "message": "Product details fetched successfully",
-  "data": {
-    "id": 1,
-    "category_id": 1,
-    "sku": "SNK-BLK-4042",
-    "name": "Streetwear Canvas Low Black",
-    "description": "Sepatu low-top canvas premium dengan insole empuk untuk penggunaan sehari-hari",
-    "price": 450000,
-    "variants": [
-      {
-        "id": 10,
-        "size": "40",
-        "stock": 15
-      },
-      {
-        "id": 11,
-        "size": "41",
-        "stock": 20
-      },
-      {
-        "id": 12,
-        "size": "42",
-        "stock": 8
-      }
-    ]
-  }
+  "message": "Category deleted successfully"
+}
+```
+
+Response Body Error (400 Bad Request):
+
+```json
+{
+  "status": "fail",
+  "message": "Category cannot be deleted because it is still being used by shoes products",
+  "errors": null
+}
+```
+
+Response Body Error (401 Unauthorized):
+
+```json
+{
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (403 Forbidden):
+
+```json
+{
+  "status": "fail",
+  "message": "Access forbidden",
+  "errors": "Admin role is required"
 }
 ```
 
@@ -139,7 +201,7 @@ Response Body Error (404 Not Found):
 ```json
 {
   "status": "fail",
-  "message": "Product not found",
+  "message": "Category not found",
   "errors": null
 }
 ```
@@ -159,6 +221,7 @@ Response Body Error (500 Internal Server Error):
 ENDPOINT : `POST /api/products`
 
 Header :
+
 - Authorization: `Bearer <token_admin>`
 
 Request Body :
@@ -184,7 +247,7 @@ Response Body Success (201 Created):
 {
   "status": "success",
   "message": "Product created successfully",
-  "data": {
+  "payload": {
     "id": 1,
     "sku": "SNK-BLK-4042",
     "name": "Streetwear Canvas Low Black",
@@ -265,11 +328,141 @@ Response Body Error (500 Internal Server Error):
 }
 ```
 
+## Get Products API
+
+ENDPOINT : `GET /api/products`
+
+Request Body : NONE
+
+Response Body Success (200 OK):
+
+```json
+{
+  "status": "success",
+  "message": "Products fetched successfully",
+  "payload": [
+    {
+      "id": 1,
+      "category_id": 1,
+      "sku": "SNK-BLK-4042",
+      "img_url": "/images/products/streetwear-canvas-low-black.jpg",
+      "name": "Streetwear Canvas Low Black",
+      "price": 450000
+    },
+    {
+      "id": 2,
+      "category_id": 1,
+      "sku": "SNK-BLK-4042",
+      "img_url": "/images/products/streetwear-canvas-low-black.jpg",
+      "name": "Streetwear Canvas Low Black",
+      "price": 450000
+    }
+  ],
+  "paging": {
+    "page": 1,
+    "total_page": 1,
+    "total_item": 1
+  }
+}
+```
+
+Response Body Error (401 Unauthorized):
+
+```json
+{
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
+}
+```
+
+## Get Product Detail API
+
+ENDPOINT : `GET /api/products/:id`
+
+Request Body : NONE
+
+Response Body Success (200 OK):
+
+```json
+{
+  "status": "success",
+  "message": "Product details fetched successfully",
+  "payload": {
+    "id": 1,
+    "category_id": 1,
+    "sku": "SNK-BLK-4042",
+    "img_url": "/images/products/streetwear-canvas-low-black.jpg",
+    "name": "Streetwear Canvas Low Black",
+    "description": "Sepatu low-top canvas premium dengan insole empuk untuk penggunaan sehari-hari",
+    "price": 450000,
+    "variants": [
+      {
+        "id": 10,
+        "size": "40",
+        "stock": 15
+      },
+      {
+        "id": 11,
+        "size": "41",
+        "stock": 20
+      },
+      {
+        "id": 12,
+        "size": "42",
+        "stock": 8
+      }
+    ]
+  }
+}
+```
+
+Response Body Error (401 Unauthorized):
+
+```json
+{
+  "status": "fail",
+  "message": "Unauthorized access",
+  "errors": "Invalid or expired token"
+}
+```
+
+Response Body Error (404 Not Found):
+
+```json
+{
+  "status": "fail",
+  "message": "Product not found",
+  "errors": null
+}
+```
+
+Response Body Error (500 Internal Server Error):
+
+```json
+{
+  "status": "error",
+  "message": "Internal server error",
+  "errors": null
+}
+```
+
 ## Update Product API (Admin Only)
 
 ENDPOINT : `PATCH /api/products/:id`
 
 Header :
+
 - Authorization: `Bearer <token_admin>`
 
 Request Body :
@@ -287,9 +480,11 @@ Response Body Success (200 OK):
 {
   "status": "success",
   "message": "Product updated successfully",
-  "data": {
+  "payload": {
     "id": 1,
+    "category_id": 1,
     "sku": "SNK-BLK-4042",
+    "img_url": "/images/products/streetwear-canvas-low-black.jpg",
     "name": "Streetwear Canvas Low Black Edition",
     "price": 499000
   }
@@ -356,6 +551,7 @@ Response Body Error (500 Internal Server Error):
 ENDPOINT : `PATCH /api/products/:id/variants/:variant-id`
 
 Header :
+
 - Authorization: `Bearer <token_admin>`
 
 Request Body :
@@ -373,22 +569,12 @@ Response Body Success (200 OK):
 {
   "status": "success",
   "message": "Product variant updated successfully",
-  "data": {
+  "payload": {
     "id": 11,
     "product_id": 1,
     "size": "41",
     "stock": 25
   }
-}
-```
-
-Response Body Error (400 Bad Request):
-
-```json
-{
-  "status": "fail",
-  "message": "Stock must be a non-negative integer",
-  "errors": null
 }
 ```
 
@@ -452,6 +638,7 @@ Response Body Error (500 Internal Server Error):
 ENDPOINT : `DELETE /api/products/:id`
 
 Header :
+
 - Authorization: `Bearer <token_admin>`
 
 Request Body : NONE
