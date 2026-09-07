@@ -3,10 +3,28 @@ import services from "../services/productServices.js";
 export default class productController {
   static async createProduct(req, res, next) {
     try {
-      const payload = req.body;
+      // Sanitize keys dari form-data (hapus invisible chars seperti \r dari Postman)
+      const rawBody = req.body;
+      const payload = {};
+      for (const [key, value] of Object.entries(rawBody)) {
+        payload[key.trim()] = value;
+      }
 
+      // Handle image upload from multipart/form-data
       if (req.file && req.file.savedPath) {
         payload.img_url = req.file.savedPath;
+      }
+
+      // Parse variants jika dikirim sebagai JSON string (form-data)
+      if (payload.variants && typeof payload.variants === "string") {
+        try {
+          payload.variants = JSON.parse(payload.variants);
+        } catch {
+          return res.status(400).json({
+            status: "error",
+            message: "Format variants tidak valid. Harus berupa JSON array.",
+          });
+        }
       }
 
       const newProduct = await services.createProduct(payload);
@@ -20,6 +38,8 @@ export default class productController {
       next(error);
     }
   }
+
+
 
   static async getProduct(req, res, next) {
     try {

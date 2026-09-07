@@ -16,10 +16,12 @@ export default class productModel {
     const dbClient = client || pool;
     const generatedSlug =
       slug ||
-      name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+      (name
+        ? name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")
+        : null);
 
     const result = await dbClient.query(
       `INSERT INTO products (category_id, sku, name, slug, description, price, img_url, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING id, category_id, sku, name, slug, description, price, img_url, created_at ;`,
@@ -34,6 +36,7 @@ export default class productModel {
       ],
     );
     return result.rows[0] || null;
+
   }
 
   static async createVariant(

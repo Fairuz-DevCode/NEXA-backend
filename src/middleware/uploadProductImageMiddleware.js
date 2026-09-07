@@ -3,7 +3,10 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 
-const uploadDir = path.join(process.cwd(), "public/img/products");
+const uploadDir = path.join(
+  process.cwd(),
+  "public/img/products",
+);
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
