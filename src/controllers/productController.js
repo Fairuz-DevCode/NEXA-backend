@@ -63,6 +63,11 @@ export default class productController {
     try {
       const productId = req.params.id;
 
+      // If id is not numeric, treat it as a slug path and delegate to slug handler
+      if (!/^\d+$/.test(productId)) {
+        return productController.getBySlugPath(req, res, next);
+      }
+
       const productDetail = await services.getProductDetail(productId);
 
       return res.status(200).json({
@@ -123,8 +128,11 @@ export default class productController {
         slugPathArray = slugPath.map((s) => decodeURIComponent(s).trim()).filter(Boolean);
       } else if (typeof slugPath === "string") {
         slugPathArray = slugPath.split("/").map((s) => decodeURIComponent(s).trim()).filter(Boolean);
+      } else if (req.params.id) {
+        // Delegated from getProductDetail — id is a slug string
+        slugPathArray = req.params.id.split("/").map((s) => decodeURIComponent(s).trim()).filter(Boolean);
       } else {
-        const rawPath = (req.params[0] || req.path).replace(/^\/api\/categories\/?/, "").replace(/^\/+|\/+$/g, "");
+        const rawPath = (req.params[0] || req.path).replace(/^\/api\/product\/?/, "").replace(/^\/+|\/+$/g, "");
         slugPathArray = rawPath ? rawPath.split("/").map((s) => decodeURIComponent(s).trim()).filter(Boolean) : [];
       }
 

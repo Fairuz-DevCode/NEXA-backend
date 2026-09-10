@@ -12,6 +12,10 @@ import userRoutes from "./routes/userRoutes.js";
 import addressRoutes  from "./routes/addressRoutes.js";
 import categoriesRoutes from "./routes/categoriesRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import shippingRoutes from "./routes/shippingRoutes.js";
 
 import { errorHandler } from "./middleware/errorMiddleware.js";
 
@@ -35,6 +39,11 @@ app.use("/api/user", userRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/product", productRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/carts", cartRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/shippings", shippingRoutes);
 
 app.use(errorHandler);
 
