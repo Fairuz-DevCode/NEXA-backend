@@ -56,15 +56,65 @@ export const cacheResponse = (ttlSeconds: number = 300, prefix: string = "cache"
 };
 
 /**
+ * Middleware untuk meng-cache data user-spesifik seperti keranjang belanja per User ID
+ */
+export const cacheUserResponse = (ttlSeconds: number = 600, prefix: string = "cart") => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (req.method !== "GET") {
+      return next();
+    }
+
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return next();
+    }
+
+    const cacheKey = `${prefix}:user:${userId}`;
+
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        const parsed: CachePayload = JSON.parse(cached);
+        res.setHeader("X-Cache", "HIT");
+        if (parsed.contentType) {
+          res.setHeader("Content-Type", parsed.contentType);
+        }
+        return res.send(parsed.body);
+      }
+    } catch (err) {
+      console.warn("Redis user cache read warning:", err);
+    }
+
+    res.setHeader("X-Cache", "MISS");
+
+    const originalSend = res.send.bind(res);
+    res.send = (body: any) => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        const contentType = res.getHeader("Content-Type") as string | undefined;
+        const payloadToCache = JSON.stringify({
+          body,
+          contentType,
+        });
+
+        redis.set(cacheKey, payloadToCache, "EX", ttlSeconds).catch((err: any) => {
+          console.warn("Redis user cache write warning:", err);
+        });
+      }
+      return originalSend(body);
+    };
+
+    next();
+  };
+};
+
+/**
  * Middleware untuk menghapus (invalidate) cache di Redis berdasarkan prefix.
- * @param prefix Prefix kunci cache yang ingin dihapus (misal "products" atau "categories")
  */
 export const invalidateCache = (prefix: string) => {
   return async (_req: Request, res: Response, next: NextFunction) => {
     const originalSend = res.send.bind(res);
     res.send = (body: any) => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        // Cari semua keys dengan prefix lalu hapus
         redis.keys(`${prefix}:*`).then((keys: string[]) => {
           if (keys && keys.length > 0) {
             redis.del(...keys).catch((err: any) => {
@@ -74,6 +124,27 @@ export const invalidateCache = (prefix: string) => {
         }).catch((err: any) => {
           console.warn("Redis keys error:", err);
         });
+      }
+      return originalSend(body);
+    };
+    next();
+  };
+};
+
+/**
+ * Middleware untuk menghapus cache keranjang belanja spesifik milik user yang sedang aktif
+ */
+export const invalidateUserCache = (prefix: string = "cart") => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const originalSend = res.send.bind(res);
+    res.send = (body: any) => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        const userId = (req as any).user?.id;
+        if (userId) {
+          redis.del(`${prefix}:user:${userId}`).catch((err: any) => {
+            console.warn("Redis user cache invalidate error:", err);
+          });
+        }
       }
       return originalSend(body);
     };
