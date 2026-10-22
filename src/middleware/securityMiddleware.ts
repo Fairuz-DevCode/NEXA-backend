@@ -1,39 +1,38 @@
 import { Request, Response, NextFunction } from "express";
-
-interface RateLimitStore {
-  count: number;
-  resetTime: number;
-}
-
-const memoryStore = new Map<string, RateLimitStore>();
+import redis from "../config/redis.js";
 
 export const rateLimiter = (options: {
   windowMs: number;
   max: number;
   message?: string;
 }) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  const windowSeconds = Math.ceil(options.windowMs / 1000);
+
+  return async (req: Request, res: Response, next: NextFunction) => {
     const ip = req.ip || req.socket.remoteAddress || "unknown";
-    const now = Date.now();
-    const clientData = memoryStore.get(ip);
+    const key = `ratelimit:${ip}`;
 
-    if (!clientData || now > clientData.resetTime) {
-      memoryStore.set(ip, {
-        count: 1,
-        resetTime: now + options.windowMs,
-      });
-      return next();
+    try {
+      // Menggunakan atomic INCR Redis
+      const current = await redis.incr(key);
+
+      // Jika pertama kali dibuat, set TTL
+      if (current === 1) {
+        await redis.expire(key, windowSeconds);
+      }
+
+      if (current > options.max) {
+        return res.status(429).json({
+          status: "error",
+          message: options.message || "Too many requests, please try again later.",
+        });
+      }
+
+      next();
+    } catch {
+      // Fallback jika Redis bermasalah, request tetap diperbolehkan
+      next();
     }
-
-    if (clientData.count >= options.max) {
-      return res.status(429).json({
-        status: "error",
-        message: options.message || "Too many requests, please try again later.",
-      });
-    }
-
-    clientData.count += 1;
-    next();
   };
 };
 

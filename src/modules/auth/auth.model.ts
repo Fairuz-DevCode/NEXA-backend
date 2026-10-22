@@ -1,5 +1,8 @@
 import pool from "../../config/db.js";
+import redis from "../../config/redis.js";
 import { UserInDB, UserRegisterDTO, UserResponse } from "./auth.types.js";
+
+const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 hari dalam detik
 
 export class AuthModel {
   static async findByEmail(email: string): Promise<UserInDB | null> {
@@ -19,6 +22,14 @@ export class AuthModel {
   }
 
   static async saveRefreshToken(userId: number, token: string): Promise<any> {
+    try {
+      // 1. Simpan di Redis dengan TTL 7 hari
+      await redis.set(`refresh_token:${userId}`, token, "EX", REFRESH_TOKEN_TTL);
+    } catch (err) {
+      console.warn("Redis saveRefreshToken error, fallback to PostgreSQL:", err);
+    }
+
+    // 2. Fallback simpan juga di DB PostgreSQL
     await pool.query(
       "DELETE FROM refresh_tokens WHERE user_id = $1 OR expires_at < NOW()",
       [userId]
@@ -33,6 +44,20 @@ export class AuthModel {
   }
 
   static async findRefreshToken(userId: number, token: string): Promise<any> {
+    try {
+      // Cek Redis terlebih dahulu (<1ms)
+      const cachedToken = await redis.get(`refresh_token:${userId}`);
+      if (cachedToken) {
+        if (cachedToken === token) {
+          return { user_id: userId, token };
+        }
+        return null;
+      }
+    } catch (err) {
+      console.warn("Redis findRefreshToken error, fallback to PostgreSQL:", err);
+    }
+
+    // Fallback baca dari PostgreSQL jika key di Redis belum ada/miss
     const result = await pool.query(
       "SELECT * FROM refresh_tokens WHERE user_id = $1 AND token = $2",
       [userId, token]
@@ -42,11 +67,19 @@ export class AuthModel {
   }
 
   static async deleteRefreshToken(token: string): Promise<any> {
-    const result = await pool.query(
-      "DELETE FROM refresh_tokens WHERE token = $1",
-      [token]
-    );
-
-    return result.rows[0] || null;
+    try {
+      // Hapus token di database PostgreSQL & invalidate di Redis
+      const result = await pool.query(
+        "DELETE FROM refresh_tokens WHERE token = $1 RETURNING user_id",
+        [token]
+      );
+      if (result.rows.length > 0) {
+        const userId = result.rows[0].user_id;
+        await redis.del(`refresh_token:${userId}`);
+      }
+      return result.rows[0] || null;
+    } catch {
+      return null;
+    }
   }
 }
