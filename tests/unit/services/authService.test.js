@@ -12,7 +12,7 @@ jest.unstable_mockModule("../../../src/utils/password.js", () => ({
   comparePassword: jest.fn(),
 }));
 
-jest.unstable_mockModule("../../../src/models/authModel.js", () => ({
+jest.unstable_mockModule("../../../src/modules/auth/auth.model.js", () => ({
   AuthModel: {
     findByEmail: jest.fn(),
     createUser: jest.fn(),
@@ -23,8 +23,8 @@ jest.unstable_mockModule("../../../src/models/authModel.js", () => ({
 }));
 
 // Import dynamically so mocks are set up beforehand
-const { AuthService } = await import("../../../src/services/authService.js");
-const { AuthModel } = await import("../../../src/models/authModel.js");
+const { AuthService } = await import("../../../src/modules/auth/auth.service.js");
+const { AuthModel } = await import("../../../src/modules/auth/auth.model.js");
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = await import("../../../src/utils/token.js");
 const { hashPassword, comparePassword } = await import("../../../src/utils/password.js");
 

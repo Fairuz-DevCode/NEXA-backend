@@ -9,7 +9,7 @@ import {
 } from "@jest/globals";
 import request from "supertest";
 import app from "../../src/app.js";
-import { AuthService } from "../../src/services/authService.js";
+import { AuthService } from "../../src/modules/auth/auth.service.js";
 import { date, email } from "zod";
 import { getExtPrefix } from "libphonenumber-js";
 
