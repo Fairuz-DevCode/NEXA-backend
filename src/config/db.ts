@@ -10,6 +10,9 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: String(process.env.DB_PASSWORD ?? ""),
+  max: 20, // Batas maksimal koneksi pool untuk mencegah Database Connection Pool Exhaustion
+  idleTimeoutMillis: 30000, // Tutup koneksi idle setelah 30 detik untuk mencegah leaked database connections
+  connectionTimeoutMillis: 5000, // Gagal cepat dalam 5 detik jika pool habis (jangan menggantung)
 });
 
 pool.on("connect", () => {

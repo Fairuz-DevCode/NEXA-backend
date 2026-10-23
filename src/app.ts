@@ -9,7 +9,9 @@ import path from "path";
 import { handleJsonSyntaxError } from "./middleware/jsonErrorMiddleware.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 import { securityHeaders, rateLimiter } from "./middleware/securityMiddleware.js";
+import { requestTimeout } from "./middleware/timeoutMiddleware.js";
 
+import healthRoutes from "./modules/health/health.routes.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
 import addressRoutes from "./modules/address/address.routes.js";
@@ -41,8 +43,12 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(requestTimeout(15000)); // 15s global timeout untuk mencegah hanging connections
 
 app.use(handleJsonSyntaxError);
+
+// Health check endpoint (tidak perlu rate limit/auth untuk Docker & K8s probes)
+app.use("/api", healthRoutes);
 
 // Serve static images from public folder
 app.use("/public", express.static(path.join(process.cwd(), "public")));

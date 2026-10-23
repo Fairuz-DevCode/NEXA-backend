@@ -1,20 +1,10 @@
-import fs from "fs";
-import path from "path";
-import pool from "../src/config/db.js";
+import { execSync } from "child_process";
 
 async function runMigration() {
-  console.log("🚀 Running Database Migration...");
-  const sqlPath = path.join(process.cwd(), "schema/db/init.sql");
-  
-  if (!fs.existsSync(sqlPath)) {
-    console.error("❌ init.sql file not found at:", sqlPath);
-    process.exit(1);
-  }
-
-  const sql = fs.readFileSync(sqlPath, "utf-8");
+  console.log("🚀 Running Database Migration via Prisma...");
   try {
-    await pool.query(sql);
-    console.log("✅ Database schema migrated successfully!");
+    execSync("npx prisma migrate deploy", { stdio: "inherit" });
+    console.log("✅ Database schema migrated successfully via Prisma!");
     process.exit(0);
   } catch (err) {
     console.error("❌ Migration error:", err);

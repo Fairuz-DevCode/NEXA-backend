@@ -1,4 +1,6 @@
 import pool from "../../config/db.js";
+import redis from "../../config/redis.js";
+import { deleteKeysByPattern } from "../../middleware/cacheMiddleware.js";
 import { OrderModel } from "./order.model.js";
 import { CartModel } from "../cart/cart.model.js";
 import { ShippingModel } from "../shipping/shipping.model.js";
@@ -33,8 +35,14 @@ export class OrderServices {
     try {
       await client.query("BEGIN");
 
-      for (const item of cartItems) {
-        const variant = await CartModel.checkVariantStock(client, item.product_variant_id);
+      // Sort variant items to prevent deadlocks when multiple transactions lock rows concurrently
+      const sortedCartItems = [...cartItems].sort(
+        (a, b) => a.product_variant_id - b.product_variant_id
+      );
+
+      for (const item of sortedCartItems) {
+        // Gunakan FOR UPDATE untuk mencegah race condition over-selling
+        const variant = await CartModel.checkVariantStock(client, item.product_variant_id, true);
         if (!variant || variant.stock < item.quantity) {
           throw new AppError("Cart is empty or stock is insufficient", 400);
         }
@@ -87,6 +95,12 @@ export class OrderServices {
       await CartModel.clearCartItems(client, cart.id);
 
       await client.query("COMMIT");
+
+      // Invalidate cache setelah transaksi berhasil
+      redis.del(`cart:user:${userId}`).catch((err: any) => {
+        console.warn("Failed to invalidate cart cache after checkout:", err);
+      });
+      deleteKeysByPattern("products:*");
 
       return {
         id: newOrder.id,
@@ -179,6 +193,9 @@ export class OrderServices {
       await OrderModel.restoreStockForOrder(client, order.id);
       const updated = await OrderModel.updateOrderStatus(client, order.id, "cancel");
       await client.query("COMMIT");
+
+      // Invalidate cache produk setelah stok dikembalikan
+      deleteKeysByPattern("products:*");
 
       return {
         id: updated.id,

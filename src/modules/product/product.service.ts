@@ -159,12 +159,20 @@ export class ProductServices {
 
       const categoryBreadcrumbs: any[] = [];
       if (category) {
-        let currCat = category;
-        categoryBreadcrumbs.unshift(currCat);
-        while (currCat && currCat.parent_id) {
-          currCat = await ProductModel.getCategoriesById(currCat.parent_id);
-          if (currCat) categoryBreadcrumbs.unshift(currCat);
-        }
+        // Optimasi N+1: Ambil hirarki kategori sekaligus menggunakan recursive CTE dalam 1 kali query
+        const hierarchyResult = await pool.query(
+          `WITH RECURSIVE category_tree AS (
+             SELECT id, name, slug, parent_id FROM categories WHERE id = $1
+             UNION ALL
+             SELECT c.id, c.name, c.slug, c.parent_id 
+             FROM categories c
+             INNER JOIN category_tree ct ON ct.parent_id = c.id
+           )
+           SELECT id, name, slug, parent_id FROM category_tree;`,
+          [category.id]
+        );
+        // Hasil unshift agar urut dari root parent ke child
+        categoryBreadcrumbs.push(...hierarchyResult.rows.reverse());
       }
 
       return {

@@ -108,6 +108,35 @@ export const cacheUserResponse = (ttlSeconds: number = 600, prefix: string = "ca
 };
 
 /**
+ * Helper fungsi untuk menghapus cache berdasarkan pattern key menggunakan SCAN (non-blocking).
+ * Mencegah server Redis freeze akibat penggunaan perintah KEYS di database besar.
+ */
+export const deleteKeysByPattern = async (pattern: string): Promise<void> => {
+  try {
+    const stream = redis.scanStream({
+      match: pattern,
+      count: 100,
+    });
+
+    stream.on("data", (keys: string[]) => {
+      if (keys.length > 0) {
+        const pipeline = redis.pipeline();
+        keys.forEach((key) => pipeline.del(key));
+        pipeline.exec().catch((err: any) => {
+          console.warn("Redis pipeline del error:", err);
+        });
+      }
+    });
+
+    stream.on("error", (err: any) => {
+      console.warn("Redis scanStream error:", err);
+    });
+  } catch (err) {
+    console.warn("Error invalidating keys by pattern:", err);
+  }
+};
+
+/**
  * Middleware untuk menghapus (invalidate) cache di Redis berdasarkan prefix.
  */
 export const invalidateCache = (prefix: string) => {
@@ -115,15 +144,7 @@ export const invalidateCache = (prefix: string) => {
     const originalSend = res.send.bind(res);
     res.send = (body: any) => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        redis.keys(`${prefix}:*`).then((keys: string[]) => {
-          if (keys && keys.length > 0) {
-            redis.del(...keys).catch((err: any) => {
-              console.warn("Redis cache invalidate error:", err);
-            });
-          }
-        }).catch((err: any) => {
-          console.warn("Redis keys error:", err);
-        });
+        deleteKeysByPattern(`${prefix}:*`);
       }
       return originalSend(body);
     };

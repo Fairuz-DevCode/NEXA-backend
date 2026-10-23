@@ -105,10 +105,11 @@ export class CartModel {
     await dbClient.query(`DELETE FROM cart_items WHERE cart_id = $1;`, [cartId]);
   }
 
-  static async checkVariantStock(client: any, variantId: number): Promise<any> {
+  static async checkVariantStock(client: any, variantId: number, forUpdate: boolean = false): Promise<any> {
     const dbClient = client || pool;
+    const lockClause = forUpdate ? "FOR UPDATE" : "";
     const result = await dbClient.query(
-      `SELECT id, product_id, size, stock FROM product_variants WHERE id = $1;`,
+      `SELECT id, product_id, size, stock FROM product_variants WHERE id = $1 ${lockClause};`,
       [variantId]
     );
     return result.rows[0] || null;
