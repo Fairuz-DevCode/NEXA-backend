@@ -184,10 +184,32 @@ model users {
   password        String            @db.VarChar(255)
   phone           String?           @db.VarChar(20)
   role            user_role?        @default(user)
+  is_two_factor_enabled Boolean     @default(false)
+  two_factor_secret     String?     @db.VarChar(255)
+  google_id             String?     @unique @db.VarChar(255)
   created_at      DateTime?         @default(now()) @db.Timestamp(6)
   product_reviews product_reviews[]
   refresh_tokens  refresh_tokens[]
   wishlists       wishlists[]
+  audit_logs      audit_logs[]
+}
+
+model audit_logs {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  action     String    @db.VarChar(100)
+  method     String    @db.VarChar(10)
+  path       String    @db.VarChar(255)
+  status_code Int
+  ip_address String    @db.VarChar(50)
+  user_agent String?   @db.Text
+  details    Json?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([action])
+  @@index([created_at])
 }
 
 model wishlists {

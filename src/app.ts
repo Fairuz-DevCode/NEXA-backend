@@ -17,9 +17,12 @@ import {
   speedLimiter,
 } from "./middleware/securityMiddleware.js";
 import { requestTimeout } from "./middleware/timeoutMiddleware.js";
+import { csrfProtection } from "./middleware/csrfMiddleware.js";
+import { auditLogger } from "./middleware/auditMiddleware.js";
 
 import healthRoutes from "./modules/health/health.routes.js";
 import authRoutes from "./modules/auth/auth.routes.js";
+import advancedAuthRoutes from "./modules/auth/advancedAuth.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
 import addressRoutes from "./modules/address/address.routes.js";
 import categoryRoutes from "./modules/category/category.routes.js";
@@ -86,6 +89,8 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(hpp());
 
 app.use(cookieParser());
+app.use(csrfProtection); // Proteksi Anti-CSRF via Double-Submit Cookie
+app.use(auditLogger()); // Rekam jejak digital mutasi data (Audit Logging)
 app.use(requestTimeout(15000)); // 15s global timeout untuk mencegah hanging connections
 
 app.use(handleJsonSyntaxError);
@@ -100,6 +105,7 @@ app.use("/uploads", express.static(path.join(process.cwd(), "public/img")));
 app.use("/img/products", express.static(path.join(process.cwd(), "public/img/products")));
 
 app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth", authLimiter, advancedAuthRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/categories", categoryRoutes);
