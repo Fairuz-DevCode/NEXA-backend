@@ -39,6 +39,14 @@ export class ProductServices {
     return await ProductModel.getAllProducts(limit, offset);
   }
 
+  static async getProductFeed(
+    limit: number = 10,
+    cursor?: number,
+    search?: string
+  ): Promise<{ products: ProductResponse[]; nextCursor: number | null }> {
+    return await ProductModel.getProductsByCursor(limit, cursor, search);
+  }
+
   static async getProductDetail(productId: number | string): Promise<ProductResponse> {
     const productDetail = await ProductModel.getProductById(productId);
     if (!productDetail) {

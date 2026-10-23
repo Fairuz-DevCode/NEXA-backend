@@ -136,6 +136,7 @@ model products {
   description      String?
   price            Int
   created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  deleted_at       DateTime?          @db.Timestamp(6)
   img_url          String             @db.VarChar(255)
   slug             String             @unique @db.VarChar
   gender           gender_type?       @default(unisex)
@@ -149,6 +150,7 @@ model products {
   @@index([category_id])
   @@index([slug])
   @@index([gender])
+  @@index([deleted_at])
 }
 
 model refresh_tokens {

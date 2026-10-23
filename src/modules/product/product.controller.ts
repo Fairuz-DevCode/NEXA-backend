@@ -39,8 +39,26 @@ export class ProductController {
 
   static async getProduct(req: Request, res: Response, next: NextFunction) {
     try {
-      const page = parseInt(req.query.page as string, 10) || 1;
+      const cursor = req.query.cursor ? parseInt(req.query.cursor as string, 10) : undefined;
+      const search = req.query.search ? String(req.query.search) : undefined;
       const limit = parseInt(req.query.limit as string, 10) || 10;
+
+      // Jika ada kursor atau search, gunakan Cursor-based pagination + PostgreSQL Trigram FTS
+      if (cursor !== undefined || req.query.cursor === "" || search !== undefined) {
+        const feed = await ProductServices.getProductFeed(limit, cursor, search);
+        return res.status(200).json({
+          status: "success",
+          message: "Success fetch product feed (cursor)",
+          payload: feed.products,
+          pagination: {
+            limit,
+            nextCursor: feed.nextCursor,
+            hasMore: feed.nextCursor !== null,
+          },
+        });
+      }
+
+      const page = parseInt(req.query.page as string, 10) || 1;
       const offset = (page - 1) * limit;
 
       const allProduct = await ProductServices.getProduct(limit, offset);

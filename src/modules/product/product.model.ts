@@ -40,11 +40,12 @@ export class ProductModel {
     const productQuery = `
       SELECT id, category_id, name, slug, price, img_url
       FROM products 
+      WHERE deleted_at IS NULL
       ORDER BY id ASC 
       LIMIT $1 OFFSET $2;
     `;
 
-    const countQuery = `SELECT COUNT(*) FROM products;`;
+    const countQuery = `SELECT COUNT(*) FROM products WHERE deleted_at IS NULL;`;
 
     const [productResult, countResult] = await Promise.all([
       pool.query(productQuery, [limit, offset]),
@@ -54,6 +55,54 @@ export class ProductModel {
     return {
       products: productResult.rows,
       totalItems: parseInt(countResult.rows[0].count, 10),
+    };
+  }
+
+  /**
+   * Keyset / Cursor-based Pagination:
+   * Menggunakan kursor penanda `id` terakhir daripada OFFSET tradisional yang lambat pada data ratusan ribu baris.
+   */
+  static async getProductsByCursor(
+    limit: number = 10,
+    cursor?: number,
+    search?: string
+  ): Promise<{ products: ProductResponse[]; nextCursor: number | null }> {
+    const values: any[] = [];
+    const conditions: string[] = ["deleted_at IS NULL"];
+
+    if (cursor) {
+      values.push(cursor);
+      conditions.push(`id > $${values.length}`);
+    }
+
+    if (search && search.trim().length > 0) {
+      values.push(`%${search.trim()}%`);
+      // Memanfaatkan PostgreSQL GIN Trigram Index (pg_trgm) untuk kecepatan tinggi & toleransi pencarian
+      conditions.push(`(name ILIKE $${values.length} OR description ILIKE $${values.length})`);
+    }
+
+    values.push(limit + 1); // Ambil 1 item ekstra untuk mengecek apakah masih ada halaman selanjutnya
+
+    const query = `
+      SELECT id, category_id, name, slug, price, img_url, created_at
+      FROM products
+      WHERE ${conditions.join(" AND ")}
+      ORDER BY id ASC
+      LIMIT $${values.length};
+    `;
+
+    const result = await pool.query(query, values);
+    const rows = result.rows;
+    let nextCursor: number | null = null;
+
+    if (rows.length > limit) {
+      const nextItem = rows.pop(); // Hapus item ekstra
+      nextCursor = rows[rows.length - 1].id;
+    }
+
+    return {
+      products: rows,
+      nextCursor,
     };
   }
 
@@ -103,7 +152,12 @@ export class ProductModel {
 
   static async deleteProduct(client: any, productId: number | string): Promise<any> {
     const dbClient = client || pool;
-    const result = await dbClient.query(`DELETE FROM products WHERE id = $1 RETURNING id;`, [productId]);
+    // Soft delete: Menandai deleted_at alih-alih menghapus data fisik (Hard Delete)
+    // agar data nota pembelian lama di order_items tetap utuh
+    const result = await dbClient.query(
+      `UPDATE products SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id;`,
+      [productId]
+    );
     return result.rows[0] || null;
   }
 
