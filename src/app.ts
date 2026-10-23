@@ -77,7 +77,14 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Idempotency-Key", "X-Idempotency-Key"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Idempotency-Key",
+      "X-Idempotency-Key",
+      "x-csrf-token",
+      "csrf-token",
+    ],
     exposedHeaders: ["X-Idempotent-Replay", "X-Cache", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
     maxAge: 86400, // Preflight cache 24 jam
   })

@@ -125,29 +125,53 @@ router.post("/2fa/disable", verifyAccessToken, async (req: Request, res: Respons
  */
 router.post("/google", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { idToken } = req.body;
-    if (!idToken) {
-      throw new AppError("Google ID Token is required", 400);
+    const { idToken, accessToken: googleAccessToken } = req.body;
+    if (!idToken && !googleAccessToken) {
+      throw new AppError("Google token is required", 400);
     }
 
-    let payload: any;
-    try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-      payload = ticket.getPayload();
-    } catch {
-      throw new AppError("Invalid or expired Google token", 401);
+    let email: string = "";
+    let googleId: string = "";
+    let name: string = "Google User";
+
+    if (idToken) {
+      try {
+        const ticket = await googleClient.verifyIdToken({
+          idToken,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        if (payload && payload.email) {
+          email = payload.email.toLowerCase();
+          googleId = payload.sub;
+          name = payload.name || "Google User";
+        }
+      } catch {
+        // Fallback jika bukan idToken murni
+      }
     }
 
-    if (!payload || !payload.email) {
+    // Jika yang dikirim oleh useGoogleLogin adalah OAuth2 Access Token
+    if (!email && (googleAccessToken || idToken)) {
+      const tokenToFetch = googleAccessToken || idToken;
+      try {
+        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenToFetch}` },
+        });
+        if (userInfoRes.ok) {
+          const info = (await userInfoRes.json()) as any;
+          email = info.email?.toLowerCase();
+          googleId = info.sub;
+          name = info.name || "Google User";
+        }
+      } catch (err: any) {
+        console.warn("Failed to fetch Google userinfo:", err.message);
+      }
+    }
+
+    if (!email) {
       throw new AppError("Could not retrieve profile from Google", 400);
     }
-
-    const email = payload.email.toLowerCase();
-    const googleId = payload.sub;
-    const name = payload.name || "Google User";
 
     // Cari user berdasarkan google_id atau email
     let userQuery = await pool.query("SELECT * FROM users WHERE google_id = $1 OR email = $2 LIMIT 1;", [

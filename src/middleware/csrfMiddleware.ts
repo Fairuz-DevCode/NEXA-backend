@@ -25,6 +25,18 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
+  // 3. Endpoint otentikasi awal (login, register, google SSO, refresh token) dikecualikan
+  // karena user belum memiliki sesi/auth state yang bisa dipalsukan (CSRF hanya menargetkan akun yang sedang login)
+  const isAuthRoute =
+    req.path.includes("/auth/login") ||
+    req.path.includes("/auth/register") ||
+    req.path.includes("/auth/refresh") ||
+    req.path.includes("/auth/google");
+
+  if (isAuthRoute) {
+    return next();
+  }
+
   // 3. Untuk request mutasi (POST, PUT, PATCH, DELETE) yang memakai cookie session,
   // validasi apakah token di header cocok dengan token di cookie
   const headerToken = (req.headers[CSRF_HEADER_NAME] || req.headers["csrf-token"]) as string | undefined;
