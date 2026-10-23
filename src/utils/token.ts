@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import env from "../config/env.js";
 
 export interface UserPayload {
   id: number;
@@ -9,25 +10,24 @@ export interface UserPayload {
 export const generateAccessToken = (user: UserPayload): string => {
   return jwt.sign(
     { id: user.id, role: user.role },
-    process.env.JWT_ACCESS_SECRET || "default_access_secret",
-    { expiresIn: "15m" }
+    env.JWT_ACCESS_SECRET,
+    { expiresIn: "15m", algorithm: "HS256" }
   );
 };
 
 export const generateRefreshToken = (user: UserPayload): string => {
   return jwt.sign(
     { id: user.id, role: user.role },
-    process.env.JWT_REFRESH_SECRET || "default_refresh_secret",
-    { expiresIn: "7d" }
+    env.JWT_REFRESH_SECRET,
+    { expiresIn: "7d", algorithm: "HS256" }
   );
 };
 
 export const verifyRefreshToken = (token: string): any => {
   try {
-    return jwt.verify(
-      token,
-      process.env.JWT_REFRESH_SECRET || "default_refresh_secret"
-    );
+    return jwt.verify(token, env.JWT_REFRESH_SECRET, {
+      algorithms: ["HS256"],
+    });
   } catch (error) {
     return null;
   }
