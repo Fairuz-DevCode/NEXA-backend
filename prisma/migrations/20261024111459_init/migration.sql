@@ -1,6 +1,3 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "gender_type" AS ENUM ('men', 'women', 'unisex', 'kids');
 
@@ -129,6 +126,7 @@ CREATE TABLE "products" (
     "description" TEXT,
     "price" INTEGER NOT NULL,
     "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP(6),
     "img_url" VARCHAR(255) NOT NULL,
     "slug" VARCHAR NOT NULL,
     "gender" "gender_type" DEFAULT 'unisex',
@@ -167,9 +165,28 @@ CREATE TABLE "users" (
     "password" VARCHAR(255) NOT NULL,
     "phone" VARCHAR(20),
     "role" "user_role" DEFAULT 'user',
+    "is_two_factor_enabled" BOOLEAN NOT NULL DEFAULT false,
+    "two_factor_secret" VARCHAR(255),
+    "google_id" VARCHAR(255),
     "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "audit_logs" (
+    "id" SERIAL NOT NULL,
+    "user_id" INTEGER,
+    "action" VARCHAR(100) NOT NULL,
+    "method" VARCHAR(10) NOT NULL,
+    "path" VARCHAR(255) NOT NULL,
+    "status_code" INTEGER NOT NULL,
+    "ip_address" VARCHAR(50) NOT NULL,
+    "user_agent" TEXT,
+    "details" JSONB,
+    "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -255,6 +272,9 @@ CREATE INDEX "products_slug_idx" ON "products"("slug");
 CREATE INDEX "products_gender_idx" ON "products"("gender");
 
 -- CreateIndex
+CREATE INDEX "products_deleted_at_idx" ON "products"("deleted_at");
+
+-- CreateIndex
 CREATE INDEX "refresh_tokens_user_id_idx" ON "refresh_tokens"("user_id");
 
 -- CreateIndex
@@ -265,6 +285,18 @@ CREATE INDEX "shippings_order_id_idx" ON "shippings"("order_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_google_id_key" ON "users"("google_id");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_user_id_idx" ON "audit_logs"("user_id");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_action_idx" ON "audit_logs"("action");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_created_at_idx" ON "audit_logs"("created_at");
 
 -- CreateIndex
 CREATE INDEX "wishlists_user_id_idx" ON "wishlists"("user_id");
@@ -318,8 +350,10 @@ ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIG
 ALTER TABLE "shippings" ADD CONSTRAINT "shippings_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "wishlists" ADD CONSTRAINT "wishlists_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "wishlists" ADD CONSTRAINT "wishlists_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

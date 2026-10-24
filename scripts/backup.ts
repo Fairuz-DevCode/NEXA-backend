@@ -1,12 +1,8 @@
-import { exec } from "child_process";
+import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 import env from "../src/config/env.js";
 
-/**
- * Script Otomatis Database Backup & PITR preparation.
- * Menghasilkan snapshot SQL terkompresi dengan timestamp.
- */
 const backupDir = path.join(process.cwd(), "backups");
 
 if (!fs.existsSync(backupDir)) {
@@ -14,18 +10,69 @@ if (!fs.existsSync(backupDir)) {
 }
 
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-const backupFile = path.join(backupDir, `db_backup_${env.DB_NAME}_${timestamp}.sql`);
+const backupFile = path.join(backupDir, `db_backup_${env.DB_NAME}_${timestamp}.dump`);
 
-console.log(`📦 Starting automated PostgreSQL backup to: ${backupFile}`);
+console.log(`Starting automated PostgreSQL backup to: ${backupFile}`);
 
-const cmd = `PGPASSWORD="${env.DB_PASSWORD}" pg_dump -h ${env.DB_HOST} -p ${env.DB_PORT} -U ${env.DB_USER} -d ${env.DB_NAME} -F c -b -v -f "${backupFile}"`;
+const args = [
+  "-h", env.DB_HOST,
+  "-p", String(env.DB_PORT),
+  "-U", env.DB_USER,
+  "-d", env.DB_NAME,
+  "-F", "c", 
+  "-b",      
+  "-v",      
+  "-f", backupFile
+];
 
-exec(cmd, (error, stdout, stderr) => {
-  if (error) {
-    console.error("❌ Database backup failed:", error.message);
+const pgDumpProcess = spawn("pg_dump", args, {
+  env: {
+    ...process.env,
+    PGPASSWORD: env.DB_PASSWORD,
+  },
+});
+
+pgDumpProcess.on("close", (code) => {
+  if (code !== 0) {
+    console.error(`Database backup failed with exit code: ${code}`);
     process.exit(1);
   }
-  console.log("✅ Database snapshot created successfully!");
-  console.log(`📁 File size: ${(fs.statSync(backupFile).size / 1024).toFixed(2)} KB`);
+
+  const fileSizeMB = (fs.statSync(backupFile).size / (1024 * 1024)).toFixed(2);
+  console.log("Database snapshot created successfully!");
+  console.log(`File size: ${fileSizeMB} MB`);
+
+  cleanOldBackups(backupDir, 7); 
+
   process.exit(0);
 });
+
+pgDumpProcess.on("error", (error) => {
+  console.error("Process failed to start:", error.message);
+  process.exit(1);
+});
+
+function cleanOldBackups(dir: string, daysToKeep: number) {
+  const files = fs.readdirSync(dir);
+  const now = Date.now();
+  const msInDay = 24 * 60 * 60 * 1000;
+  let deletedCount = 0;
+
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+
+    if (stat.isFile()) {
+      const ageInDays = (now - stat.mtimeMs) / msInDay;
+      
+      if (ageInDays > daysToKeep) {
+        fs.unlinkSync(filePath);
+        deletedCount++;
+      }
+    }
+  });
+
+  if (deletedCount > 0) {
+    console.log(`Deleted ${deletedCount} old backup file(s) (older than ${daysToKeep} days).`);
+  }
+}
